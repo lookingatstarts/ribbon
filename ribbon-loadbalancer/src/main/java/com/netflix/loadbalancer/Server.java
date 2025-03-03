@@ -60,6 +60,7 @@ public class Server {
     public static final String UNKNOWN_ZONE = "UNKNOWN";
     private String host;
     private int port = 80;
+    // http / https
     private String scheme;
     private volatile String id;
     private volatile boolean isAliveFlag;
@@ -148,7 +149,6 @@ public class Server {
         if (id != null) {
             String host = null;
             int port = 80;
-
             if (id.toLowerCase().startsWith("http://")) {
                 id = id.substring(7);
                 port = 80;

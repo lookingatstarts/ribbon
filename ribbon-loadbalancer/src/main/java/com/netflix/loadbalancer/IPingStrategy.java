@@ -10,6 +10,7 @@ package com.netflix.loadbalancer;
  * @author Dmitry_Cherkas
  * @see Server
  * @see IPing
+ *
  */
 public interface IPingStrategy {
 

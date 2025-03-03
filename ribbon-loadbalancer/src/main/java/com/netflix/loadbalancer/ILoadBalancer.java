@@ -26,7 +26,7 @@ import java.util.List;
  * server from the existing list of server.
  * 
  * @author stonse
- * 
+ *  负载均衡接口
  */
 public interface ILoadBalancer {
 
@@ -46,6 +46,8 @@ public interface ILoadBalancer {
 	 * @param key An object that the load balancer may use to determine which server to return. null if 
 	 *         the load balancer does not use this parameter.
 	 * @return server chosen
+	 *
+	 * 选择一台实例
 	 */
 	public Server chooseServer(Object key);
 	
@@ -71,6 +73,7 @@ public interface ILoadBalancer {
 	public List<Server> getServerList(boolean availableOnly);
 
 	/**
+	 * 可用服务实例
 	 * @return Only the servers that are up and reachable.
      */
     public List<Server> getReachableServers();
