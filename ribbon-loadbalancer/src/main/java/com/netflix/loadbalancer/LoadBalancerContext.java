@@ -39,26 +39,19 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A class contains APIs intended to be used be load balancing client which is subclass of this class.
- * 
+ * 上下文
  * @author awang
  */
 public class LoadBalancerContext implements IClientConfigAware {
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancerContext.class);
 
     protected String clientName = "default";          
-
     protected String vipAddresses;
-
     protected int maxAutoRetriesNextServer = CommonClientConfigKey.MaxAutoRetriesNextServer.defaultValue();
     protected int maxAutoRetries = CommonClientConfigKey.MaxAutoRetries.defaultValue();
-
     protected RetryHandler defaultRetryHandler = new DefaultLoadBalancerRetryHandler();
-
-
     protected boolean okToRetryOnAllOperations = CommonClientConfigKey.OkToRetryOnAllOperations.defaultValue();
-
     private ILoadBalancer lb;
-
     private volatile Timer tracer;
 
     public LoadBalancerContext(ILoadBalancer lb) {
@@ -87,6 +80,7 @@ public class LoadBalancerContext implements IClientConfigAware {
         if (clientConfig == null) {
             return;    
         }
+        // clientName
         clientName = clientConfig.getClientName();
         if (StringUtils.isEmpty(clientName)) {
             clientName = "default";
@@ -96,9 +90,7 @@ public class LoadBalancerContext implements IClientConfigAware {
         maxAutoRetriesNextServer = clientConfig.getOrDefault(CommonClientConfigKey.MaxAutoRetriesNextServer);
         okToRetryOnAllOperations = clientConfig.getOrDefault(CommonClientConfigKey.OkToRetryOnAllOperations);
         defaultRetryHandler = new DefaultLoadBalancerRetryHandler(clientConfig);
-        
         tracer = getExecuteTracer();
-
         Monitors.registerObject("Client_" + clientName, this);
     }
 

@@ -259,7 +259,6 @@ public class LoadBalancerCommand<T> {
      */
     public Observable<T> submit(final ServerOperation<T> operation) {
         final ExecutionInfoContext context = new ExecutionInfoContext();
-        
         if (listenerInvoker != null) {
             try {
                 listenerInvoker.onExecutionStart();

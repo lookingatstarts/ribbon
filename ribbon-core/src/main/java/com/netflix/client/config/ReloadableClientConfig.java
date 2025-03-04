@@ -39,16 +39,18 @@ public abstract class ReloadableClientConfig implements IClientConfig {
 
     // Map of raw property names (without namespace or client name) to values. All values are non-null and properly
     // typed to match the key type
+    // 内部配置
     private final Map<IClientConfigKey, Optional<?>> internalProperties = new ConcurrentHashMap<>();
-
+    // 动态配置
     private final Map<IClientConfigKey, ReloadableProperty<?>> dynamicProperties = new ConcurrentHashMap<>();
 
     // List of actions to perform when configuration changes.  This includes both updating the Property instances
     // as well as external consumers.
+    // 配置变化,callback逻辑
     private final Map<IClientConfigKey, Runnable> changeActions = new ConcurrentHashMap<>();
 
     private final AtomicLong refreshCounter = new AtomicLong();
-
+    //
     private final PropertyResolver resolver;
 
     private String clientName = DEFAULT_CLIENT_NAME;

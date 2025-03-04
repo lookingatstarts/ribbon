@@ -35,10 +35,16 @@ import java.util.List;
  */
 public class DefaultLoadBalancerRetryHandler implements RetryHandler {
 
+    /**
+     * 重试异常
+     */
     @SuppressWarnings("unchecked")
     private List<Class<? extends Throwable>> retriable = 
             Lists.<Class<? extends Throwable>>newArrayList(ConnectException.class, SocketTimeoutException.class);
-    
+
+    /**
+     * 熔断异常
+     */
     @SuppressWarnings("unchecked")
     private List<Class<? extends Throwable>> circuitRelated = 
             Lists.<Class<? extends Throwable>>newArrayList(SocketException.class, SocketTimeoutException.class);
@@ -64,7 +70,8 @@ public class DefaultLoadBalancerRetryHandler implements RetryHandler {
         this.retryNextServer = clientConfig.getOrDefault(CommonClientConfigKey.MaxAutoRetriesNextServer);
         this.retryEnabled = clientConfig.getOrDefault(CommonClientConfigKey.OkToRetryOnAllOperations);
     }
-    
+
+    // 是否可重试
     @Override
     public boolean isRetriableException(Throwable e, boolean sameServer) {
         if (retryEnabled) {
@@ -78,6 +85,7 @@ public class DefaultLoadBalancerRetryHandler implements RetryHandler {
     }
 
     /**
+     * 是否为熔断异常
      * @return true if {@link SocketException} or {@link SocketTimeoutException} is a cause in the Throwable.
      */
     @Override

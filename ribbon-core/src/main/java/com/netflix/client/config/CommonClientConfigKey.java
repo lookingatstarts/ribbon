@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+/**
+ */
 public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
 
     public static final String DEFAULT_NAME_SPACE = "ribbon";
@@ -193,7 +195,7 @@ public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
     public static final IClientConfigKey<String> RequestIdHeaderName = new CommonClientConfigKey<String>("RequestIdHeaderName") {};
     
     public static final IClientConfigKey<Boolean> UseIPAddrForServer = new CommonClientConfigKey<Boolean>("UseIPAddrForServer", false) {};
-    
+
     public static final IClientConfigKey<String> ListOfServers = new CommonClientConfigKey<String>("listOfServers", "") {};
 
     private static final Set<IClientConfigKey> keys = new HashSet<IClientConfigKey>();
@@ -227,6 +229,9 @@ public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
         return keys;
     }
 
+    /**
+     * 根据配置项目名称获取IClientConfigKey
+     */
     public static IClientConfigKey valueOf(final String name) {
         for (IClientConfigKey key: keys()) {
             if (key.key().equals(name)) {
@@ -247,7 +252,9 @@ public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
     }
     
     private final String configKey;
+    // 值类型
     private final Class<T> type;
+    // 默认值
     private T defaultValue;
 
     @SuppressWarnings("unchecked")
@@ -258,8 +265,7 @@ public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
     protected CommonClientConfigKey(String configKey, T defaultValue) {
         this.configKey = configKey;
         Type superclass = getClass().getGenericSuperclass();
-        checkArgument(superclass instanceof ParameterizedType,
-                "%s isn't parameterized", superclass);
+        checkArgument(superclass instanceof ParameterizedType, "%s isn't parameterized", superclass);
         Type runtimeType = ((ParameterizedType) superclass).getActualTypeArguments()[0];
         type = (Class<T>) TypeToken.of(runtimeType).getRawType();
         this.defaultValue = defaultValue;
@@ -270,11 +276,8 @@ public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
         return type;
     }
 
-    /* (non-Javadoc)
-	 * @see com.netflix.niws.client.ClientConfig#key()
-	 */
     @Override
-	public String key() {
+	  public String key() {
         return configKey;
     }
     

@@ -32,9 +32,11 @@ public class Server {
      * Additional meta information of a server, which contains
      * information of the targeting application, as well as server identification
      * specific for a deployment environment, for example, AWS.
+     * 元数据： 服务信息 部署信息等
      */
     public static interface MetaInfo {
         /**
+         * 应用程序名称
          * @return the name of application that runs on this server, null if not available
          */
         public String getAppName();
@@ -42,17 +44,20 @@ public class Server {
         /**
          * @return the group of the server, for example, auto scaling group ID in AWS.
          * Null if not available
+         * 分组
          */
         public String getServerGroup();
 
         /**
          * @return A virtual address used by the server to register with discovery service.
          * Null if not available
+         * 服务ID
          */
         public String getServiceIdForDiscovery();
 
         /**
          * @return ID of the server
+         * 实例ID
          */
         public String getInstanceId();
     }
@@ -60,10 +65,15 @@ public class Server {
     public static final String UNKNOWN_ZONE = "UNKNOWN";
     private String host;
     private int port = 80;
+    // https / http
     private String scheme;
+    // instanceId
     private volatile String id;
+    // 存活与否
     private volatile boolean isAliveFlag;
+    // zone区域
     private String zone = UNKNOWN_ZONE;
+    // 是否可用
     private volatile boolean readyToServe = true;
 
     private MetaInfo simpleMetaInfo = new MetaInfo() {
@@ -146,9 +156,8 @@ public class Server {
 
     static Pair<String, Integer> getHostPort(String id) {
         if (id != null) {
-            String host = null;
+            String host;
             int port = 80;
-
             if (id.toLowerCase().startsWith("http://")) {
                 id = id.substring(7);
                 port = 80;
@@ -156,14 +165,11 @@ public class Server {
                 id = id.substring(8);
                 port = 443;
             }
-
             if (id.contains("/")) {
                 int slash_idx = id.indexOf("/");
                 id = id.substring(0, slash_idx);
             }
-
             int colon_idx = id.indexOf(':');
-
             if (colon_idx == -1) {
                 host = id; // default
             } else {

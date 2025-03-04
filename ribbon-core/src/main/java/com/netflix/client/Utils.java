@@ -3,8 +3,10 @@ package com.netflix.client;
 import java.util.Collection;
 
 public class Utils {
+
     public static boolean isPresentAsCause(Throwable throwableToSearchIn,
             Collection<Class<? extends Throwable>> throwableToSearchFor) {
+        // infinite：无效 Prevention：防范
         int infiniteLoopPreventionCounter = 10;
         while (throwableToSearchIn != null && infiniteLoopPreventionCounter > 0) {
             infiniteLoopPreventionCounter--;

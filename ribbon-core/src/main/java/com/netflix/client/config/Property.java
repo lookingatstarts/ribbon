@@ -29,6 +29,7 @@ public interface Property<T> {
     }
 
     static <T> Property<T> of(T value) {
+
         return new Property<T>() {
             @Override
             public void onChange(Consumer<T> consumer) {

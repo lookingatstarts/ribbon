@@ -76,7 +76,10 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
         } 
         return false;
     }
-    
+
+    /**
+     * 负载均衡处理请求
+     */
     public T executeWithLoadBalancer(S request) throws ClientException {
         return executeWithLoadBalancer(request, null);
     }
@@ -92,7 +95,6 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
      */
     public T executeWithLoadBalancer(final S request, final IClientConfig requestConfig) throws ClientException {
         LoadBalancerCommand<T> command = buildLoadBalancerCommand(request, requestConfig);
-
         try {
             return command.submit(
                 new ServerOperation<T>() {
@@ -120,7 +122,10 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
         }
         
     }
-    
+
+    /**
+     * 获取重试处理器
+     */
     public abstract RequestSpecificRetryHandler getRequestSpecificRetryHandler(S request, IClientConfig requestConfig);
 
     protected LoadBalancerCommand<T> buildLoadBalancerCommand(final S request, final IClientConfig config) {

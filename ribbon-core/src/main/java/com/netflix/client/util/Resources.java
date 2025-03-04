@@ -9,7 +9,10 @@ import org.slf4j.LoggerFactory;
 
 public abstract class Resources {
     private static final Logger logger = LoggerFactory.getLogger(Resources.class);
-    
+
+    /**
+     * 加载资源
+     */
     public static URL getResource(String resourceName) {
         URL url = null;
         // attempt to load from the context classpath

@@ -22,10 +22,13 @@ import java.util.stream.StreamSupport;
 
 /**
  * Created by awang on 7/18/14.
+ * 简单工厂设计模式
  */
 public interface ClientConfigFactory {
-    IClientConfig newConfig();
 
+    // 创建IClientConfig
+    IClientConfig newConfig();
+    // Spi机制加载ClientConfigFactory
     ClientConfigFactory DEFAULT = findDefaultConfigFactory();
 
     default int getPriority() { return 0; }

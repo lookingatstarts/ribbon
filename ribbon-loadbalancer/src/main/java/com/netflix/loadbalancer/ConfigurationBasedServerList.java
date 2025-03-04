@@ -47,6 +47,7 @@ public class ConfigurationBasedServerList extends AbstractServerList<Server>  {
 
 	@Override
 	public List<Server> getUpdatedListOfServers() {
+				// 从配置中获取server列表
         String listOfServers = clientConfig.get(CommonClientConfigKey.ListOfServers);
         return derive(listOfServers);
 	}
@@ -63,7 +64,7 @@ public class ConfigurationBasedServerList extends AbstractServerList<Server>  {
 				list.add(new Server(s.trim()));
 			}
 		}
-        return list;
+		return list;
 	}
 
 	@Override

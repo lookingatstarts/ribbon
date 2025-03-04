@@ -20,7 +20,7 @@ package com.netflix.client.config;
 /**
  * Defines the key used in {@link IClientConfig}. See {@link CommonClientConfigKey}
  * for the commonly defined client configuration keys.
- * 
+ *
  * @author awang
  *
  */

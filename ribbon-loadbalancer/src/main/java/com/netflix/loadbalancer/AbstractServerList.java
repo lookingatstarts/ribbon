@@ -41,10 +41,11 @@ public abstract class AbstractServerList<T extends Server> implements ServerList
     public AbstractServerListFilter<T> getFilterImpl(IClientConfig niwsClientConfig) throws ClientException {
         String niwsServerListFilterClassName = null;
         try {
+            // AbstractServerListFilter
             niwsServerListFilterClassName = niwsClientConfig.get(
                             CommonClientConfigKey.NIWSServerListFilterClassName,
                             ZoneAffinityServerListFilter.class.getName());
-
+            // 创建过滤器对象
             AbstractServerListFilter<T> abstractNIWSServerListFilter = 
                     (AbstractServerListFilter<T>) ClientFactory.instantiateInstanceWithClientConfig(niwsServerListFilterClassName, niwsClientConfig);
             return abstractNIWSServerListFilter;
@@ -52,7 +53,7 @@ public abstract class AbstractServerList<T extends Server> implements ServerList
             throw new ClientException(
                     ClientException.ErrorType.CONFIGURATION,
                     "Unable to get an instance of CommonClientConfigKey.NIWSServerListFilterClassName. Configured class:"
-                            + niwsServerListFilterClassName, e);
+                          + niwsServerListFilterClassName, e);
         }
     }
 }
