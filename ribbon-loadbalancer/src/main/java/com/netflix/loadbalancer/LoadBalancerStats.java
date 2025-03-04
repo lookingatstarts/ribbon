@@ -116,7 +116,6 @@ public class LoadBalancerStats implements IClientConfigAware {
 
     public LoadBalancerStats(String name) {
         this.name = name;
-
         Monitors.registerObject(name, this);
     }
 

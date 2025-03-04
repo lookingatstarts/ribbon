@@ -215,15 +215,18 @@ public class ClientFactory {
      * @param clientConfig IClientConfig object used for initialization.
      */
     @SuppressWarnings("unchecked")
-	public static Object instantiateInstanceWithClientConfig(String className, IClientConfig clientConfig) 
-    		throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+	public static Object instantiateInstanceWithClientConfig(String className, IClientConfig clientConfig)
+        throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+      // 加载类
     	Class clazz = Class.forName(className);
     	if (IClientConfigAware.class.isAssignableFrom(clazz)) {
+        // 初始化
     		IClientConfigAware obj = (IClientConfigAware) clazz.newInstance();
     		obj.initWithNiwsConfig(clientConfig);
     		return obj;
     	} else {
     		try {
+            // 获取参数为IClientConfig的构造器，进行初始化对象
     		    if (clazz.getConstructor(IClientConfig.class) != null) {
     		    	return clazz.getConstructor(IClientConfig.class).newInstance(clientConfig);
     		    }

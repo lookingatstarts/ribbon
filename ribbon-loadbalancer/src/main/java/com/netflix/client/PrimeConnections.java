@@ -55,11 +55,14 @@ import com.netflix.servo.monitor.Timer;
  * @author stonse
  * @author awang
  * @author aspyker
- * 
+ *
+ * Prime：主要的
+ *
  */
 public class PrimeConnections {
 
     public static interface PrimeConnectionListener {
+
         public void primeCompleted(Server s, Throwable lastException);
     }
     
@@ -139,6 +142,7 @@ public class PrimeConnections {
         }
         final String primeConnectionsURI = niwsClientConfig.getOrDefault(CommonClientConfigKey.PrimeConnectionsURI);
         float primeRatio = niwsClientConfig.getOrDefault(CommonClientConfigKey.MinPrimeConnectionsRatio);
+        // 获取IPrimeConnection实现类
         final String className = niwsClientConfig.getOrDefault(CommonClientConfigKey.PrimeConnectionsClassName);
         try {
             connector = (IPrimeConnection) Class.forName(className).newInstance();
@@ -167,19 +171,11 @@ public class PrimeConnections {
         this.maxTotalTimeToPrimeConnections = maxTotalTimeToPrimeConnections;
         this.primeConnectionsURIPath = primeConnectionsURI;        
         this.primeRatio = primeRatio;
-        executorService = new ThreadPoolExecutor(1 /* minimum */,
-                maxExecutorThreads /* max threads */,
-                executorThreadTimeout /*
-                                       * timeout - same property as create
-                                       * timeout
-                                       */, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>()
-                /* Bounded queue with FIFO- bounded to max tasks */,
-                new ASyncPrimeConnectionsThreadFactory(name) /*
-                                                              * So we can give
-                                                              * our Thread a
-                                                              * name
-                                                              */
+        // 建立线程池
+        executorService = new ThreadPoolExecutor(1,
+                maxExecutorThreads,executorThreadTimeout , TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(),
+                new ASyncPrimeConnectionsThreadFactory(name)
         );        
         totalCounter = Monitors.newCounter(name + "_PrimeConnection_TotalCounter");
         successCounter = Monitors.newCounter(name + "_PrimeConnection_SuccessCounter");
@@ -210,16 +206,15 @@ public class PrimeConnections {
         primeConnectionsAsync(servers, new PrimeConnectionListener()  {            
             @Override
             public void primeCompleted(Server s, Throwable lastException) {
-                if (lastException == null) {
+                if (lastException == null) { // 成功
                     successCount.incrementAndGet();
                     s.setReadyToServe(true);
-                } else {
+                } else { // 失败
                     failureCount.incrementAndGet();
                 }
                 latch.countDown();
             }
         }); 
-                
         Stopwatch stopWatch = initialPrimeTimer.start();
         try {
             latch.await(maxTotalTimeToPrimeConnections, TimeUnit.MILLISECONDS);
@@ -228,9 +223,7 @@ public class PrimeConnections {
         } finally {
             stopWatch.stop();
         }
-
         stats = new PrimeConnectionEndStats(totalCount, successCount.get(), failureCount.get(), stopWatch.getDuration(TimeUnit.MILLISECONDS));
-
         printStats(stats);
     }
 
@@ -247,8 +240,7 @@ public class PrimeConnections {
         logger.debug("numServers left to be 'primed'="
                 + (stats.total - stats.success));
         logger.debug("numServers successfully 'primed'=" + stats.success);
-        logger
-                .debug("numServers whose attempts not complete exclusively due to max time allocated="
+        logger.debug("numServers whose attempts not complete exclusively due to max time allocated="
                         + (stats.total - (stats.success + stats.failure)));
         logger.debug("Total Time Taken=" + stats.totalTime
                 + " msecs, out of an allocated max of (msecs)="
@@ -285,16 +277,14 @@ public class PrimeConnections {
             logger.debug("RestClient:" + name + ". No nodes/servers to prime connections");
             return Collections.emptyList();
         }        
-
-        logger.info("Priming Connections for RestClient:" + name
-                + ", numServers:" + allServers.size());
+        logger.info("Priming Connections for RestClient:" + name + ", numServers:" + allServers.size());
         List<Future<Boolean>> ftList = new ArrayList<Future<Boolean>>();
         for (Server s : allServers) {
             // prevent the server to be used by load balancer
             // will be set to true when priming is done
             s.setReadyToServe(false);
-            if (aSync) {
-                Future<Boolean> ftC = null;
+            if (aSync) { // 异步
+                Future<Boolean> ftC;
                 try {
                     ftC = makeConnectionASync(s, listener);
                     ftList.add(ftC);
@@ -308,20 +298,19 @@ public class PrimeConnections {
                     // the goal here is to attempt "priming/opening" the route
                     // in ec2 .. actual http results do not matter
                 }
-            } else {
+            } else {// 同步
                 connectToServer(s, listener);
             }
         }   
         return ftList;
     }
-    
-    private Future<Boolean> makeConnectionASync(final Server s, 
-            final PrimeConnectionListener listener) throws InterruptedException, RejectedExecutionException {
-        Callable<Boolean> ftConn = new Callable<Boolean>() {
-            public Boolean call() throws Exception {
-                logger.debug("calling primeconnections ...");
-                return connectToServer(s, listener);
-            }
+
+    // 建立连接
+    private Future<Boolean> makeConnectionASync(final Server s, final PrimeConnectionListener listener)
+        throws InterruptedException, RejectedExecutionException {
+        Callable<Boolean> ftConn = () -> {
+            logger.debug("calling prime connections ...");
+            return connectToServer(s, listener);
         };
         return executorService.submit(ftConn);
     }
@@ -331,30 +320,27 @@ public class PrimeConnections {
         Monitors.unregisterObject(name + "_PrimeConnection", this);
     }
 
+    // 和实例建立连接
     private Boolean connectToServer(final Server s, final PrimeConnectionListener listener) {
         int tryNum = 0;
-        Exception lastException = null;
+        Exception lastException;
         totalCounter.increment();
         boolean success = false;
         do {
             try {
-                logger.debug("Executing PrimeConnections request to server {} with path {}, tryNum={}",
-                	s, primeConnectionsURIPath, tryNum);
+                logger.debug("Executing PrimeConnections request to server {} with path {}, tryNum={}", s, primeConnectionsURIPath, tryNum);
                 success = connector.connect(s, primeConnectionsURIPath);
                 successCounter.increment();
                 lastException = null;
                 break;
             } catch (Exception e) {
-                // It does not really matter if there was an exception,
-                // the goal here is to attempt "priming/opening" the route
-                // in ec2 .. actual http results do not matter
                 logger.debug("Error connecting to server: {}", e.getMessage());
                 lastException = e;
                 sleepBeforeRetry(tryNum);
             } 
             logger.debug("server:{}, result={}, tryNum={}, maxRetries={}", s, success, tryNum, maxRetries);
             tryNum++;
-        } while (!success && (tryNum <= maxRetries));
+        } while (!success && (tryNum <= maxRetries)); // 重试10次
         // set the alive flag so that it can be used by load balancers
         if (listener != null) {
             try {
@@ -363,8 +349,7 @@ public class PrimeConnections {
                 logger.error("Error calling PrimeComplete listener for server '{}'", s, e);
             }
         }
-        logger.debug("Either done, or quitting server:{}, result={}, tryNum={}, maxRetries={}", 
-        	s, success, tryNum, maxRetries);
+        logger.debug("Either done, or quitting server:{}, result={}, tryNum={}, maxRetries={}", s, success, tryNum, maxRetries);
         return success;
     }
 
@@ -372,12 +357,15 @@ public class PrimeConnections {
         try {
             int sleep = (tryNum + 1) * 100;
             logger.debug("Sleeping for " + sleep + "ms ...");
-            Thread.sleep(sleep); // making this seconds based is too slow
+            Thread.sleep(sleep);
             // i.e. 200ms, 400 ms, 800ms, 1600ms etc.
         } catch (InterruptedException ex) {
         }
     }
-    
+
+    /**
+     * 线程工厂
+     */
     static class ASyncPrimeConnectionsThreadFactory implements ThreadFactory {
         private static final AtomicInteger groupNumber = new AtomicInteger(1);
         private final ThreadGroup group;
@@ -392,8 +380,7 @@ public class PrimeConnections {
         }
 
         public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r, namePrefix
-                    + threadNumber.getAndIncrement(), 0);
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
             if (!t.isDaemon())
                 t.setDaemon(true);
             if (t.getPriority() != Thread.NORM_PRIORITY)

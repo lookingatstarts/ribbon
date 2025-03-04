@@ -22,7 +22,7 @@ import com.netflix.client.config.IClientConfig;
 
 /**
  * A client that can execute a single request. 
- * 
+ * 一个可以处理单个请求的客户端
  * @author awang
  *
  */

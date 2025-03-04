@@ -63,8 +63,9 @@ public class NFHttpClientFactory {
 
     public static NFHttpClient getNamedNFHttpClient(String name, boolean registerMonitor) {
 		IClientConfig config = ClientConfigFactory.DEFAULT.newConfig();
+		// 加载配置
 		config.loadProperties(name);
-        return getNamedNFHttpClient(name, config, registerMonitor);
+		return getNamedNFHttpClient(name, config, registerMonitor);
     }
     
 	public static NFHttpClient getNamedNFHttpClient(String name, IClientConfig config, boolean registerMonitor) {		

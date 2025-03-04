@@ -37,7 +37,6 @@ public class NIWSDiscoveryPing extends AbstractLoadBalancerPing {
 	        
 		BaseLoadBalancer lb = null; 
 		
-
 		public NIWSDiscoveryPing() {
 		}
 		

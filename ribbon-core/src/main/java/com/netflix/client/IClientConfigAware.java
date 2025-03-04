@@ -29,19 +29,21 @@ import com.netflix.client.config.IClientConfig;
  *
  */
 public interface IClientConfigAware {
+
+    /**
+     * 工厂类
+     */
     interface Factory {
         Object create(String type, IClientConfig config) throws InstantiationException, IllegalAccessException, ClassNotFoundException;
     }
 
-    /**
-     * Concrete implementation should implement this method so that the configuration set via 
-     * {@link IClientConfig} (which in turn were set via Archaius properties) will be taken into consideration
-     *
-     * @param clientConfig
-     */
     default void initWithNiwsConfig(IClientConfig clientConfig) {
+
     }
 
+    /**
+     * 使用IClientConfig进行初始化
+     */
     default void initWithNiwsConfig(IClientConfig clientConfig, Factory factory) {
         initWithNiwsConfig(clientConfig);
     }

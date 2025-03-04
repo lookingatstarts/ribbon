@@ -60,66 +60,67 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         PrimeConnections.PrimeConnectionListener, IClientConfigAware {
 
     private static Logger logger = LoggerFactory.getLogger(BaseLoadBalancer.class);
-
+    // 默认负载均衡算法：轮询
     private final static IRule DEFAULT_RULE = new RoundRobinRule();
+    // 默认的ping策略
     private final static SerialPingStrategy DEFAULT_PING_STRATEGY = new SerialPingStrategy();
+
     private static final String DEFAULT_NAME = "default";
     private static final String PREFIX = "LoadBalancer_";
-
+    // 负载均衡算法
     protected IRule rule = DEFAULT_RULE;
-
+    // ping策略
     protected IPingStrategy pingStrategy = DEFAULT_PING_STRATEGY;
-
+    // ping
     protected IPing ping = null;
 
     @Monitor(name = PREFIX + "AllServerList", type = DataSourceType.INFORMATIONAL)
-    protected volatile List<Server> allServerList = Collections
-            .synchronizedList(new ArrayList<Server>());
+    protected volatile List<Server> allServerList = Collections.synchronizedList(new ArrayList<Server>());
     @Monitor(name = PREFIX + "UpServerList", type = DataSourceType.INFORMATIONAL)
-    protected volatile List<Server> upServerList = Collections
-            .synchronizedList(new ArrayList<Server>());
-
+    protected volatile List<Server> upServerList = Collections.synchronizedList(new ArrayList<Server>());
+    // 锁
     protected ReadWriteLock allServerLock = new ReentrantReadWriteLock();
     protected ReadWriteLock upServerLock = new ReentrantReadWriteLock();
 
     protected String name = DEFAULT_NAME;
-
     protected Timer lbTimer = null;
     protected int pingIntervalSeconds = 10;
     protected int maxTotalPingTimeSeconds = 5;
-    protected Comparator<Server> serverComparator = new ServerComparator();
-
+    // ping进行中标识
     protected AtomicBoolean pingInProgress = new AtomicBoolean(false);
 
     protected LoadBalancerStats lbStats;
 
     private volatile Counter counter = Monitors.newCounter("LoadBalancer_ChooseServer");
-
+    // 准备好连接
     private PrimeConnections primeConnections;
 
     private volatile boolean enablePrimingConnections = false;
-    
+    // 配置
     private IClientConfig config;
-    
+    // 实例列表发生变化
     private List<ServerListChangeListener> changeListeners = new CopyOnWriteArrayList<ServerListChangeListener>();
-
+    // 实例状态发生变化
     private List<ServerStatusChangeListener> serverStatusListeners = new CopyOnWriteArrayList<ServerStatusChangeListener>();
 
     /**
-     * Default constructor which sets name as "default", sets null ping, and
-     * {@link RoundRobinRule} as the rule.
+     * Default constructor which sets name as "default", sets null ping, and {@link RoundRobinRule} as the rule.
+     * 默认构造器：name:default ping:null 使用RoundRobinRule
      * <p>
-     * This constructor is mainly used by {@link ClientFactory}. Calling this
-     * constructor must be followed by calling {@link #init()} or
+     * 这个构造器是提供给反射
+     * This constructor is mainly used by {@link ClientFactory}.
+     * Calling this constructor must be followed by calling {@link #init()} or
      * {@link #initWithNiwsConfig(IClientConfig)} to complete initialization.
-     * This constructor is provided for reflection. When constructing
-     * programatically, it is recommended to use other constructors.
+     * This constructor is provided for reflection.
+     * When constructing programatically, it is recommended to use other constructors.
      */
     public BaseLoadBalancer() {
         this.name = DEFAULT_NAME;
         this.ping = null;
         setRule(DEFAULT_RULE);
+        // ping
         setupPingTask();
+        // 统计
         lbStats = new LoadBalancerStats(DEFAULT_NAME);
     }
 
@@ -142,9 +143,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     
     public BaseLoadBalancer(String name, IRule rule, LoadBalancerStats stats,
             IPing ping, IPingStrategy pingStrategy) {
-	
         logger.debug("LoadBalancer [{}]:  initialized", name);
-        
         this.name = name;
         this.ping = ping;
         this.pingStrategy = pingStrategy;
@@ -165,22 +164,20 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     void initWithConfig(IClientConfig clientConfig, IRule rule, IPing ping) {
         initWithConfig(clientConfig, rule, ping, createLoadBalancerStatsFromConfig(config, ClientFactory::instantiateInstanceWithClientConfig));
     }
-    
+
+    // 初始化
     void initWithConfig(IClientConfig clientConfig, IRule rule, IPing ping, LoadBalancerStats stats) {
         this.config = clientConfig;
         this.name = clientConfig.getClientName();
         int pingIntervalTime = clientConfig.get(CommonClientConfigKey.NFLoadBalancerPingInterval, 30);
         int maxTotalPingTime = clientConfig.get(CommonClientConfigKey.NFLoadBalancerMaxTotalPingTime, 2);
-
         setPingInterval(pingIntervalTime);
         setMaxTotalPingTime(maxTotalPingTime);
-
         // cross associate with each other
         // i.e. Rule,Ping meet your container LB
         // LB, these are your Ping and Rule guys ...
         setRule(rule);
         setPing(ping);
-
         setLoadBalancerStats(stats);
         rule.setLoadBalancer(this);
         if (ping instanceof AbstractLoadBalancerPing) {
@@ -188,11 +185,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         }
         logger.info("Client: {} instantiated a LoadBalancer: {}", name, this);
         boolean enablePrimeConnections = clientConfig.getOrDefault(CommonClientConfigKey.EnablePrimeConnections);
-
         if (enablePrimeConnections) {
             this.setEnablePrimingConnections(true);
-            PrimeConnections primeConnections = new PrimeConnections(
-                    this.getName(), clientConfig);
+            PrimeConnections primeConnections = new PrimeConnections(this.getName(), clientConfig);
             this.setPrimeConnections(primeConnections);
         }
         init();
@@ -210,7 +205,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
 
     @Override
     public void initWithNiwsConfig(IClientConfig clientConfig, Factory factory) {
+        // rule
         String ruleClassName = clientConfig.getOrDefault(CommonClientConfigKey.NFLoadBalancerRuleClassName);
+        // ping
         String pingClassName = clientConfig.getOrDefault(CommonClientConfigKey.NFLoadBalancerPingClassName);
         try {
             IRule rule = (IRule)factory.create(ruleClassName, clientConfig);
@@ -254,9 +251,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
     
     private boolean canSkipPing() {
-        if (ping == null
-                || ping.getClass().getName().equals(DummyPing.class.getName())) {
-            // default ping, no need to set up timer
+        // default ping, no need to set up timer
+        if (ping == null || ping.getClass().getName().equals(DummyPing.class.getName())) {
             return true;
         } else {
             return false;
@@ -264,14 +260,15 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
 
     void setupPingTask() {
+        // 跳过ping
         if (canSkipPing()) {
             return;
         }
         if (lbTimer != null) {
             lbTimer.cancel();
         }
-        lbTimer = new ShutdownEnabledTimer("NFLoadBalancer-PingTimer-" + name,
-                true);
+        lbTimer = new ShutdownEnabledTimer("NFLoadBalancer-PingTimer-" + name, true);
+        // 默认每10s ping
         lbTimer.schedule(new PingTask(), 0, pingIntervalSeconds * 1000);
         forceQuickPing();
     }
@@ -323,11 +320,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         if (pingIntervalSeconds < 1) {
             return;
         }
-
         this.pingIntervalSeconds = pingIntervalSeconds;
         if (logger.isDebugEnabled()) {
-            logger.debug("LoadBalancer [{}]:  pingIntervalSeconds set to {}",
-        	    name, this.pingIntervalSeconds);
+            logger.debug("LoadBalancer [{}]:  pingIntervalSeconds set to {}", name, this.pingIntervalSeconds);
         }
         setupPingTask(); // since ping data changed
     }
@@ -388,6 +383,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
             /* default rule */
             this.rule = new RoundRobinRule();
         }
+        // 给rule设置LoadBalancer
         if (this.rule.getLoadBalancer() != this) {
             this.rule.setLoadBalancer(this);
         }
@@ -474,14 +470,14 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
 
     /**
-     * Set the list of servers used as the server pool. This overrides existing
-     * server list.
+     * Set the list of servers used as the server pool. This overrides existing server list.
+     * 更新server实例列表
      */
     public void setServersList(List lsrv) {
         Lock writeLock = allServerLock.writeLock();
         logger.debug("LoadBalancer [{}]: clearing server list (SET op)", name);
-        
         ArrayList<Server> newServers = new ArrayList<Server>();
+        // 加锁
         writeLock.lock();
         try {
             ArrayList<Server> allServers = new ArrayList<Server>();
@@ -489,27 +485,23 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                 if (server == null) {
                     continue;
                 }
-
                 if (server instanceof String) {
                     server = new Server((String) server);
                 }
-
                 if (server instanceof Server) {
                     logger.debug("LoadBalancer [{}]:  addServer [{}]", name, ((Server) server).getId());
                     allServers.add((Server) server);
                 } else {
-                    throw new IllegalArgumentException(
-                            "Type String or Server expected, instead found:"
-                                    + server.getClass());
+                    throw new IllegalArgumentException("Type String or Server expected, instead found:" + server.getClass());
                 }
-
             }
             boolean listChanged = false;
             if (!allServerList.equals(allServers)) {
                 listChanged = true;
                 if (changeListeners != null && changeListeners.size() > 0) {
                    List<Server> oldList = ImmutableList.copyOf(allServerList);
-                   List<Server> newList = ImmutableList.copyOf(allServers);                   
+                   List<Server> newList = ImmutableList.copyOf(allServers);
+                   // 通知监听器
                    for (ServerListChangeListener l: changeListeners) {
                        try {
                            l.serverListChanged(oldList, newList);
@@ -543,6 +535,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                 forceQuickPing();
             }
         } finally {
+            // 解锁
             writeLock.unlock();
         }
     }
@@ -641,12 +634,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         }
     }
 
-    /**
-     * Class that contains the mechanism to "ping" all the instances
-     * 
-     * @author stonse
-     *
-     */
     class Pinger {
 
         private final IPingStrategy pingerStrategy;
@@ -659,53 +646,42 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
             if (!pingInProgress.compareAndSet(false, true)) { 
                 return; // Ping in progress - nothing to do
             }
-            
             // we are "in" - we get to Ping
-
             Server[] allServers = null;
             boolean[] results = null;
-
             Lock allLock = null;
             Lock upLock = null;
-
             try {
-                /*
-                 * The readLock should be free unless an addServer operation is
-                 * going on...
-                 */
                 allLock = allServerLock.readLock();
                 allLock.lock();
+                // 复制服务实例
                 allServers = allServerList.toArray(new Server[allServerList.size()]);
                 allLock.unlock();
-
                 int numCandidates = allServers.length;
                 results = pingerStrategy.pingServers(ping, allServers);
-
                 final List<Server> newUpList = new ArrayList<Server>();
                 final List<Server> changedServers = new ArrayList<Server>();
-
                 for (int i = 0; i < numCandidates; i++) {
                     boolean isAlive = results[i];
                     Server svr = allServers[i];
+                    // 上一次检查的状态
                     boolean oldIsAlive = svr.isAlive();
-
                     svr.setAlive(isAlive);
-
                     if (oldIsAlive != isAlive) {
+                        // 状态发生变化
                         changedServers.add(svr);
-                        logger.debug("LoadBalancer [{}]:  Server [{}] status changed to {}", 
-                    		name, svr.getId(), (isAlive ? "ALIVE" : "DEAD"));
+                        logger.debug("LoadBalancer [{}]:  Server [{}] status changed to {}", name, svr.getId(), (isAlive ? "ALIVE" : "DEAD"));
                     }
-
                     if (isAlive) {
                         newUpList.add(svr);
                     }
                 }
+                // 更新存活的实例
                 upLock = upServerLock.writeLock();
                 upLock.lock();
                 upServerList = newUpList;
                 upLock.unlock();
-
+                // 实例状态发生变化通知listener
                 notifyServerStatusChangeListener(changedServers);
             } finally {
                 pingInProgress.set(false);
@@ -819,7 +795,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
             return;
         }
         logger.debug("LoadBalancer [{}]:  forceQuickPing invoking", name);
-        
         try {
         	new Pinger(pingStrategy).runPinger();
         } catch (Exception e) {
@@ -843,6 +818,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         Monitors.registerObject("LoadBalancer_" + name, this);
         // register the rule as it contains metric for available servers count
         Monitors.registerObject("Rule_" + name, this.getRule());
+        // 建立连接
         if (enablePrimingConnections && primeConnections != null) {
             primeConnections.primeConnections(getReachableServers());
         }
@@ -896,18 +872,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
             for (int i = 0; i < numCandidates; i++) {
                 results[i] = false; /* Default answer is DEAD. */
                 try {
-                    // NOTE: IFF we were doing a real ping
-                    // assuming we had a large set of servers (say 15)
-                    // the logic below will run them serially
-                    // hence taking 15 times the amount of time it takes
-                    // to ping each server
-                    // A better method would be to put this in an executor
-                    // pool
-                    // But, at the time of this writing, we dont REALLY
-                    // use a Real Ping (its mostly in memory eureka call)
-                    // hence we can afford to simplify this design and run
-                    // this
-                    // serially
                     if (ping != null) {
                         results[i] = ping.isAlive(servers[i]);
                     }
