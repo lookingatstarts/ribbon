@@ -43,8 +43,7 @@ import java.util.List;
  * @author stonse
  *
  */
-public class ZoneAffinityServerListFilter<T extends Server> extends
-        AbstractServerListFilter<T> implements IClientConfigAware {
+public class ZoneAffinityServerListFilter<T extends Server> extends AbstractServerListFilter<T> implements IClientConfigAware {
 
     private static IClientConfigKey<String> ZONE = new CommonClientConfigKey<String>("@zone", "") {};
     private static IClientConfigKey<Double> MAX_LOAD_PER_SERVER = new CommonClientConfigKey<Double>("zoneAffinity.maxLoadPerServer", 0.6d) {};

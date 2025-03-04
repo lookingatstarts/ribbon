@@ -22,7 +22,8 @@ import java.util.List;
 /**
  * This interface allows for filtering the configured or dynamically obtained
  * List of candidate servers with desirable characteristics.
- * 
+ * 过滤服务实例
+ *
  * @author stonse
  * 
  * @param <T>

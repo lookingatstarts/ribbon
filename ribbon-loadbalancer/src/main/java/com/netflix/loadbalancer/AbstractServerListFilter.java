@@ -27,6 +27,7 @@ package com.netflix.loadbalancer;
  */
 public abstract class AbstractServerListFilter<T extends Server> implements ServerListFilter<T> {
 
+    // 统计
     private volatile LoadBalancerStats stats;
     
     public void setLoadBalancerStats(LoadBalancerStats stats) {
