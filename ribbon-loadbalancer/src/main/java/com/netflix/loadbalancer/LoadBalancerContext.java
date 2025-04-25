@@ -46,19 +46,12 @@ public class LoadBalancerContext implements IClientConfigAware {
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancerContext.class);
 
     protected String clientName = "default";          
-
     protected String vipAddresses;
-
     protected int maxAutoRetriesNextServer = DefaultClientConfigImpl.DEFAULT_MAX_AUTO_RETRIES_NEXT_SERVER;
     protected int maxAutoRetries = DefaultClientConfigImpl.DEFAULT_MAX_AUTO_RETRIES;
-
     protected RetryHandler defaultRetryHandler = new DefaultLoadBalancerRetryHandler();
-
-
     protected boolean okToRetryOnAllOperations = DefaultClientConfigImpl.DEFAULT_OK_TO_RETRY_ON_ALL_OPERATIONS.booleanValue();
-
     private ILoadBalancer lb;
-
     private volatile Timer tracer;
 
     public LoadBalancerContext(ILoadBalancer lb) {
@@ -94,12 +87,9 @@ public class LoadBalancerContext implements IClientConfigAware {
         vipAddresses = clientConfig.resolveDeploymentContextbasedVipAddresses();
         maxAutoRetries = clientConfig.getPropertyAsInteger(CommonClientConfigKey.MaxAutoRetries, DefaultClientConfigImpl.DEFAULT_MAX_AUTO_RETRIES);
         maxAutoRetriesNextServer = clientConfig.getPropertyAsInteger(CommonClientConfigKey.MaxAutoRetriesNextServer,maxAutoRetriesNextServer);
-
         okToRetryOnAllOperations = clientConfig.getPropertyAsBoolean(CommonClientConfigKey.OkToRetryOnAllOperations, okToRetryOnAllOperations);
         defaultRetryHandler = new DefaultLoadBalancerRetryHandler(clientConfig);
-        
         tracer = getExecuteTracer();
-
         Monitors.registerObject("Client_" + clientName, this);
     }
 
@@ -466,10 +456,10 @@ public class LoadBalancerContext implements IClientConfigAware {
             host = original.getHost();
         }
         if (original != null) {
+            // Pair<请求协议(http https),请求端口>
             Pair<String, Integer> schemeAndPort = deriveSchemeAndPortFromPartialUri(original);        
             port = schemeAndPort.second();
         }
-
         // Various Supported Cases
         // The loadbalancer to use and the instances it has is based on how it was registered
         // In each of these cases, the client might come in using Full Url or Partial URL

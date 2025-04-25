@@ -44,18 +44,19 @@ public abstract class AbstractServerPredicate implements Predicate<PredicateKey>
     
     protected IRule rule;
     private volatile LoadBalancerStats lbStats;
-    
     private final Random random = new Random();
-    
     private final AtomicInteger nextIndex = new AtomicInteger();
-            
+
+    // 只根据Server去过滤，忽略loadBalanceKey
     private final Predicate<Server> serverOnlyPredicate =  new Predicate<Server>() {
         @Override
-        public boolean apply(@Nullable Server input) {                    
+        public boolean apply(@Nullable Server input) {
+            // 调用AbstractServerPredicate实现类的apply方法
             return AbstractServerPredicate.this.apply(new PredicateKey(input));
         }
     };
 
+    // 永远返回true
     public static AbstractServerPredicate alwaysTrue() { 
         return new AbstractServerPredicate() {        
             @Override
@@ -172,6 +173,7 @@ public abstract class AbstractServerPredicate implements Predicate<PredicateKey>
      * is presumed to be null.
      */
     public Optional<Server> chooseRoundRobinAfterFiltering(List<Server> servers) {
+        //
         List<Server> eligible = getEligibleServers(servers);
         if (eligible.size() == 0) {
             return Optional.absent();

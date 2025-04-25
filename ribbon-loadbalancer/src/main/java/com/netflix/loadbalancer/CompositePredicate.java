@@ -39,20 +39,19 @@ import com.google.common.collect.Lists;
  */
 public class CompositePredicate extends AbstractServerPredicate {
 
+    // 委托
     private AbstractServerPredicate delegate;
-    
+    // fallback
     private List<AbstractServerPredicate> fallbacks = Lists.newArrayList();
-        
     private int minimalFilteredServers = 1;
-    
-    private float minimalFilteredPercentage = 0;    
-    
+    private float minimalFilteredPercentage = 0;
+
+    // 过滤server
     @Override
     public boolean apply(@Nullable PredicateKey input) {
         return delegate.apply(input);
     }
 
-    
     public static class Builder {
         
         private CompositePredicate toBuild;
@@ -97,14 +96,18 @@ public class CompositePredicate extends AbstractServerPredicate {
     }
 
     /**
+     * Eligible：有资格的，合适的
      * Get the filtered servers from primary predicate, and if the number of the filtered servers
      * are not enough, trying the fallback predicates  
      */
     @Override
     public List<Server> getEligibleServers(List<Server> servers, Object loadBalancerKey) {
+        // 调用父类的方法
         List<Server> result = super.getEligibleServers(servers, loadBalancerKey);
         Iterator<AbstractServerPredicate> i = fallbacks.iterator();
-        while (!(result.size() >= minimalFilteredServers && result.size() > (int) (servers.size() * minimalFilteredPercentage))
+        // 继续过滤
+        while (!(result.size() >= minimalFilteredServers &&
+                result.size() > (int) (servers.size() * minimalFilteredPercentage))
                 && i.hasNext()) {
             AbstractServerPredicate predicate = i.next();
             result = predicate.getEligibleServers(servers, loadBalancerKey);

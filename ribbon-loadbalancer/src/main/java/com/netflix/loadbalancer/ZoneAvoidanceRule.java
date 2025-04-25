@@ -32,11 +32,11 @@ import com.netflix.client.config.IClientConfig;
  * 
  * @author awang
  *
+ * 负载均衡算法
  */
 public class ZoneAvoidanceRule extends PredicateBasedRule {
 
     private static final Random random = new Random();
-    
     private CompositePredicate compositePredicate;
     
     public ZoneAvoidanceRule() {

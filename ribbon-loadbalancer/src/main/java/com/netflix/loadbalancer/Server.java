@@ -20,6 +20,8 @@ package com.netflix.loadbalancer;
 import com.netflix.util.Pair;
 
 /**
+ * 服务实例
+ *
  * Class that represents a typical Server (or an addressable Node) i.e. a
  * Host:port identifier
  * 
@@ -58,14 +60,19 @@ public class Server {
     }
 
     public static final String UNKNOWN_ZONE = "UNKNOWN";
+    // ip地址
     private String host;
+    // 端口
     private int port = 80;
+    // https/http
     private String scheme;
     private volatile String id;
     private volatile boolean isAliveFlag;
+    // 区域
     private String zone = UNKNOWN_ZONE;
+    // 是否可接收请求
     private volatile boolean readyToServe = true;
-
+    // 元数据
     private MetaInfo simpleMetaInfo = new MetaInfo() {
         @Override
         public String getAppName() {

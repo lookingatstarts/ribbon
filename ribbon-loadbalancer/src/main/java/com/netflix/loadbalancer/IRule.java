@@ -33,9 +33,10 @@ public interface IRule{
      * @return choosen Server object. NULL is returned if none
      *  server is available 
      */
-
+    // 负载算法
     public Server choose(Object key);
-    
+
+    // 负载均衡器
     public void setLoadBalancer(ILoadBalancer lb);
     
     public ILoadBalancer getLoadBalancer();    

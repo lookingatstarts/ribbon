@@ -26,7 +26,9 @@ package com.netflix.loadbalancer;
  *
  */
 public class PredicateKey {
+    // 负载均衡key
     private Object loadBalancerKey;
+    // 服务实例
     private Server server;
     
     public PredicateKey(Object loadBalancerKey, Server server) {

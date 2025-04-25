@@ -19,6 +19,8 @@ package com.netflix.loadbalancer;
 
 import com.google.common.base.Optional;
 
+import java.util.List;
+
 /**
  * A rule which delegates the server filtering logic to an instance of {@link AbstractServerPredicate}.
  * After filtering, a server is returned from filtered list in a round robin fashion.
@@ -41,8 +43,11 @@ public abstract class PredicateBasedRule extends ClientConfigEnabledRoundRobinRu
      */
     @Override
     public Server choose(Object key) {
+        // 负载均衡器
         ILoadBalancer lb = getLoadBalancer();
-        Optional<Server> server = getPredicate().chooseRoundRobinAfterFiltering(lb.getAllServers(), key);
+        // 获取所有机器
+        List<Server> allServers = lb.getAllServers();
+        Optional<Server> server = getPredicate().chooseRoundRobinAfterFiltering(allServers, key);
         if (server.isPresent()) {
             return server.get();
         } else {

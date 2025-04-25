@@ -181,6 +181,7 @@ public class LoadBalancerCommand<T> {
             @Override
             public void call(Subscriber<? super Server> next) {
                 try {
+                    // 选择一台实例
                     Server server = loadBalancerContext.getServerFromLoadBalancer(loadBalancerURI, loadBalancerKey);   
                     next.onNext(server);
                     next.onCompleted();
@@ -299,7 +300,7 @@ public class LoadBalancerCommand<T> {
                                         }
                                         
                                         final Stopwatch tracer = loadBalancerContext.getExecuteTracer().start();
-                                        
+                                        // 负载均衡选择一个服务实例，进行请求
                                         return operation.call(server).doOnEach(new Observer<T>() {
                                             private T entity;
                                             @Override

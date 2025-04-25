@@ -37,7 +37,8 @@ import com.netflix.loadbalancer.reactive.ServerOperation;
  *
  */
 public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T extends IResponse> extends LoadBalancerContext implements IClient<S, T>, IClientConfigAware {
-    
+
+    // 注入ILoadBalancer
     public AbstractLoadBalancerAwareClient(ILoadBalancer lb) {
         super(lb);
     }
@@ -92,7 +93,6 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
      */
     public T executeWithLoadBalancer(final S request, final IClientConfig requestConfig) throws ClientException {
         LoadBalancerCommand<T> command = buildLoadBalancerCommand(request, requestConfig);
-
         try {
             return command.submit(
                 new ServerOperation<T>() {

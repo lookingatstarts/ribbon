@@ -34,7 +34,10 @@ import java.util.List;
  * 
  */
 public abstract class AbstractLoadBalancer implements ILoadBalancer {
-    
+
+    /**
+     * 服务实例列表
+     */
     public enum ServerGroup{
         ALL,
         STATUS_UP,

@@ -68,11 +68,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     private static final String PREFIX = "LoadBalancer_";
 
     protected IRule rule = DEFAULT_RULE;
-
     protected IPingStrategy pingStrategy = DEFAULT_PING_STRATEGY;
-
     protected IPing ping = null;
-
+    // 监控
     @Monitor(name = PREFIX + "AllServerList", type = DataSourceType.INFORMATIONAL)
     protected volatile List<Server> allServerList = Collections
             .synchronizedList(new ArrayList<Server>());
@@ -143,9 +141,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     
     public BaseLoadBalancer(String name, IRule rule, LoadBalancerStats stats,
             IPing ping, IPingStrategy pingStrategy) {
-	
         logger.debug("LoadBalancer [{}]:  initialized", name);
-        
         this.name = name;
         this.ping = ping;
         this.pingStrategy = pingStrategy;
@@ -263,8 +259,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
     
     private boolean canSkipPing() {
-        if (ping == null
-                || ping.getClass().getName().equals(DummyPing.class.getName())) {
+        // 是否跳过ping
+        if (ping == null || ping.getClass().getName().equals(DummyPing.class.getName())) {
             // default ping, no need to set up timer
             return true;
         } else {
@@ -272,6 +268,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         }
     }
 
+    // 启动ping命令
     void setupPingTask() {
         if (canSkipPing()) {
             return;
@@ -397,6 +394,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
             /* default rule */
             this.rule = new RoundRobinRule();
         }
+        // 设置负载均衡器
         if (this.rule.getLoadBalancer() != this) {
             this.rule.setLoadBalancer(this);
         }
@@ -424,7 +422,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         if (newServer != null) {
             try {
                 ArrayList<Server> newList = new ArrayList<Server>();
-
                 newList.addAll(allServerList);
                 newList.add(newServer);
                 setServersList(newList);
@@ -489,7 +486,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     public void setServersList(List lsrv) {
         Lock writeLock = allServerLock.writeLock();
         logger.debug("LoadBalancer [{}]: clearing server list (SET op)", name);
-        
         ArrayList<Server> newServers = new ArrayList<Server>();
         writeLock.lock();
         try {
@@ -498,7 +494,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                 if (server == null) {
                     continue;
                 }
-
                 if (server instanceof String) {
                     server = new Server((String) server);
                 }
@@ -828,7 +823,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
             return;
         }
         logger.debug("LoadBalancer [{}]:  forceQuickPing invoking", name);
-        
         try {
         	new Pinger(pingStrategy).runPinger();
         } catch (Exception e) {
@@ -889,6 +883,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
 
     /**
+     * IPing策略
+     *
      * Default implementation for <c>IPingStrategy</c>, performs ping
      * serially, which may not be desirable, if your <c>IPing</c>
      * implementation is slow, or you have large number of servers.
@@ -899,9 +895,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         public boolean[] pingServers(IPing ping, Server[] servers) {
             int numCandidates = servers.length;
             boolean[] results = new boolean[numCandidates];
-
             logger.debug("LoadBalancer:  PingTask executing [{}] servers configured", numCandidates);
-
             for (int i = 0; i < numCandidates; i++) {
                 results[i] = false; /* Default answer is DEAD. */
                 try {

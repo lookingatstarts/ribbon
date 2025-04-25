@@ -28,6 +28,7 @@ import com.netflix.client.config.IClientConfig;
  */
 public class ClientConfigEnabledRoundRobinRule extends AbstractLoadBalancerRule {
 
+    // 默认使用论选算法
     RoundRobinRule roundRobinRule = new RoundRobinRule();
 
     @Override

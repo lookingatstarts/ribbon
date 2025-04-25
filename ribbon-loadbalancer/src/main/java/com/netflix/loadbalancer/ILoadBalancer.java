@@ -20,6 +20,7 @@ package com.netflix.loadbalancer;
 import java.util.List;
 
 /**
+ * 负载均衡器：1、增加实例 2、选择实例 3、标识服务实例下线
  * Interface that defines the operations for a software loadbalancer. A typical
  * loadbalancer minimally need a set of servers to loadbalance for, a method to
  * mark a particular server to be out of rotation and a call that will choose a
@@ -71,11 +72,13 @@ public interface ILoadBalancer {
 	public List<Server> getServerList(boolean availableOnly);
 
 	/**
+	 * 获取可访问实例列表
 	 * @return Only the servers that are up and reachable.
      */
     public List<Server> getReachableServers();
 
     /**
+	 * 获取所有实例列表
      * @return All known servers, both reachable and unreachable.
      */
 	public List<Server> getAllServers();
