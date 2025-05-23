@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 执行ExecutionListener监听方法的工具类
+ *
  * Utility class to invoke the list of {@link ExecutionListener} with {@link ExecutionContext}
  *
  * @author Allen Wang

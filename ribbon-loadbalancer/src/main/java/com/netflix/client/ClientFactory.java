@@ -200,6 +200,7 @@ public class ClientFactory {
 	public static Object instantiateInstanceWithClientConfig(String className, IClientConfig clientConfig) 
     		throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     	Class clazz = Class.forName(className);
+        // 如果是IClientConfigAware，通过构造方法实例，通过initWithNiwsConfig方法初始化
     	if (IClientConfigAware.class.isAssignableFrom(clazz)) {
     		IClientConfigAware obj = (IClientConfigAware) clazz.newInstance();
     		obj.initWithNiwsConfig(clientConfig);

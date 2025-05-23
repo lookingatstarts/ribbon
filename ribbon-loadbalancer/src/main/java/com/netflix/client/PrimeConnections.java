@@ -44,6 +44,7 @@ import com.netflix.servo.monitor.Stopwatch;
 import com.netflix.servo.monitor.Timer;
 
 /**
+ * todo zbb
  * Prime the connections for a given Client (For those Client that
  * have a LoadBalancer that knows the set of Servers it will connect to) This is
  * mainly done to address those deployment environments (Read EC2) which benefit

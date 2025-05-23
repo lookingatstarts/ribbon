@@ -45,24 +45,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBalancer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicServerListLoadBalancer.class);
-
+    // 没有用处
     boolean isSecure = false;
     boolean useTunnel = false;
 
     // to keep track of modification of server lists
+    // 防止多个线程修改服务实例列表
     protected AtomicBoolean serverListUpdateInProgress = new AtomicBoolean(false);
-
+    // 提供服务列表：1、Nacos提供了实现 2、ConfigurationBasedServerList通过配置文件方式实现
     volatile ServerList<T> serverListImpl;
-
+    // 对ServerList进行过滤，默认实现：ZoneAffinityServerListFilter
     volatile ServerListFilter<T> filter;
-
+    // 更新操作
     protected final ServerListUpdater.UpdateAction updateAction = new ServerListUpdater.UpdateAction() {
         @Override
         public void doUpdate() {
             updateListOfServers();
         }
     };
-
+    // ServerList更新器
     protected volatile ServerListUpdater serverListUpdater;
 
     public DynamicServerListLoadBalancer() {
@@ -139,8 +140,8 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         boolean primeConnection = this.isEnablePrimingConnections();
         // turn this off to avoid duplicated asynchronous priming done in BaseLoadBalancer.setServerList()
         this.setEnablePrimingConnections(false);
+        // 开启启动更新实例任务
         enableAndInitLearnNewServersFeature();
-
         updateListOfServers();
         if (primeConnection && this.getPrimeConnections() != null) {
             this.getPrimeConnections()
@@ -149,8 +150,10 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         this.setEnablePrimingConnections(primeConnection);
         LOGGER.info("DynamicServerListLoadBalancer for client {} initialized: {}", clientConfig.getClientName(), this.toString());
     }
-    
-    
+
+    /**
+     * 定时任务：更新实例列表
+     */
     @Override
     public void setServersList(List lsrv) {
         super.setServersList(lsrv);
@@ -220,6 +223,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
      */
     public void enableAndInitLearnNewServersFeature() {
         LOGGER.info("Using serverListUpdater {}", serverListUpdater.getClass().getSimpleName());
+        // 启动任务
         serverListUpdater.start(updateAction);
     }
 
@@ -237,6 +241,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     public void updateListOfServers() {
         List<T> servers = new ArrayList<T>();
         if (serverListImpl != null) {
+            // 重新拉去配置
             servers = serverListImpl.getUpdatedListOfServers();
             LOGGER.debug("List of Servers for {} obtained from Discovery client: {}",
                     getIdentifier(), servers);

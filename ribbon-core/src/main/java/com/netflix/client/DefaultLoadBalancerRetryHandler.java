@@ -28,6 +28,8 @@ import java.net.SocketTimeoutException;
 import java.util.List;
 
 /**
+ * 负载均衡重试处理器
+ *
  * A default {@link RetryHandler}. The implementation is limited to
  * known exceptions in java.net. Specific client implementation should provide its own
  * {@link RetryHandler}

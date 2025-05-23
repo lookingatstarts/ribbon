@@ -20,10 +20,10 @@ package com.netflix.client;
 import java.net.ConnectException;
 
 /**
- * A handler that determines if an exception is retriable for load balancer,
- * and if an exception or error response should be treated as circuit related failures
- * so that the load balancer can avoid such server.
- *  
+ * A handler that determines(决定) if an exception is retriable(可重试) for load balancer,
+ * and if an exception or error response should be treated(视为) as circuit related failures
+ * so that the load balancer can avoid(避免这个实例) such server.
+ *
  * @author awang
  */
 public interface RetryHandler {

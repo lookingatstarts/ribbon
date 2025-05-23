@@ -36,7 +36,7 @@ import java.util.List;
 public abstract class AbstractLoadBalancer implements ILoadBalancer {
 
     /**
-     * 服务实例列表
+     * 服务实例列表分组
      */
     public enum ServerGroup{
         ALL,
@@ -60,6 +60,7 @@ public abstract class AbstractLoadBalancer implements ILoadBalancer {
     public abstract List<Server> getServerList(ServerGroup serverGroup);
     
     /**
+     * 负载均衡性能相关的统计信息
      * Obtain LoadBalancer related Statistics
      */
     public abstract LoadBalancerStats getLoadBalancerStats();    

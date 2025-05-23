@@ -35,7 +35,9 @@ public interface IClientConfigAware {
      * {@link IClientConfig} (which in turn were set via Archaius properties) will be taken into consideration
      *
      * @param clientConfig
+     *
+     * 初始化方法
      */
-    public abstract void initWithNiwsConfig(IClientConfig clientConfig);
+    void initWithNiwsConfig(IClientConfig clientConfig);
     
 }

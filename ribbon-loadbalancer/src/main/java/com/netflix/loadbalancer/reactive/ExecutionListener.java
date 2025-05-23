@@ -18,6 +18,7 @@
 package com.netflix.loadbalancer.reactive;
 
 /**
+ * 监听器：负载均衡在不同阶段执行
  * A listener to be invoked by load balancer at different stage of execution.
  *
  * @param <I> Input type used by {@link ExecutionContext} passed to

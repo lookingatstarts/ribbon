@@ -45,7 +45,8 @@ public class RequestSpecificRetryHandler implements RetryHandler {
             } 
         }
     }
-    
+
+    // 是否为连接exception
     public boolean isConnectionException(Throwable e) {
         return Utils.isPresentAsCause(e, connectionRelated);
     }
@@ -54,20 +55,23 @@ public class RequestSpecificRetryHandler implements RetryHandler {
     public boolean isRetriableException(Throwable e, boolean sameServer) {
         if (okToRetryOnAllErrors) {
             return true;
-        } 
-        else if (e instanceof ClientException) {
+        } else if (e instanceof ClientException) {
             ClientException ce = (ClientException) e;
             if (ce.getErrorType() == ClientException.ErrorType.SERVER_THROTTLED) {
+                // 如果服务端错误，同台机器不重试
                 return !sameServer;
             } else {
                 return false;
             }
-        } 
-        else  {
+        } else  {
+            // 连接错误
             return okToRetryOnConnectErrors && isConnectionException(e);
         }
     }
 
+    /**
+     * 熔断exception
+     */
     @Override
     public boolean isCircuitTrippingException(Throwable e) {
         return fallback.isCircuitTrippingException(e);

@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * 自旋拉取服务列表更新器
+ *
  * A default strategy for the dynamic server list updater to update.
  * (refactored and moved here from {@link com.netflix.loadbalancer.DynamicServerListLoadBalancer})
  *
@@ -34,6 +36,7 @@ public class PollingServerListUpdater implements ServerListUpdater {
 
         static ScheduledThreadPoolExecutor _serverListRefreshExecutor = null;
 
+        // 构造线程池
         static {
             int coreSize = poolSizeProp.get();
             ThreadFactory factory = (new ThreadFactoryBuilder())
@@ -54,13 +57,13 @@ public class PollingServerListUpdater implements ServerListUpdater {
                     shutdownExecutorPool();
                 }
             });
+            // 关闭线程池沟子方法
             Runtime.getRuntime().addShutdownHook(_shutdownThread);
         }
 
         private static void shutdownExecutorPool() {
             if (_serverListRefreshExecutor != null) {
                 _serverListRefreshExecutor.shutdown();
-
                 if (_shutdownThread != null) {
                     try {
                         Runtime.getRuntime().removeShutdownHook(_shutdownThread);
@@ -78,7 +81,6 @@ public class PollingServerListUpdater implements ServerListUpdater {
     private static ScheduledThreadPoolExecutor getRefreshExecutor() {
         return LazyHolder._serverListRefreshExecutor;
     }
-
 
     private final AtomicBoolean isActive = new AtomicBoolean(false);
     private volatile long lastUpdated = System.currentTimeMillis();
@@ -113,6 +115,7 @@ public class PollingServerListUpdater implements ServerListUpdater {
                         return;
                     }
                     try {
+                        // 定时任务主动拉取服务列表
                         updateAction.doUpdate();
                         lastUpdated = System.currentTimeMillis();
                     } catch (Exception e) {

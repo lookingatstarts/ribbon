@@ -52,6 +52,7 @@ For each request, the steps above will be repeated. That is to say, each zone re
  */
 public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLoadBalancer<T> {
 
+    // Map<zone,balancers>
     private ConcurrentHashMap<String, BaseLoadBalancer> balancers = new ConcurrentHashMap<String, BaseLoadBalancer>();
     
     private static final Logger logger = LoggerFactory.getLogger(ZoneAwareLoadBalancer.class);
@@ -86,12 +87,14 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         super(niwsClientConfig);
     }
 
+    // 定时任务更新实例的时候调用
     @Override
     protected void setServerListForZones(Map<String, List<Server>> zoneServersMap) {
         super.setServerListForZones(zoneServersMap);
         if (balancers == null) {
             balancers = new ConcurrentHashMap<String, BaseLoadBalancer>();
         }
+        // Map<zone,实例列表>
         for (Map.Entry<String, List<Server>> entry: zoneServersMap.entrySet()) {
         	String zone = entry.getKey().toLowerCase();
             getLoadBalancer(zone).setServersList(entry.getValue());
@@ -121,7 +124,6 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
                 triggeringLoad = DynamicPropertyFactory.getInstance().getDoubleProperty(
                         "ZoneAwareNIWSDiscoveryLoadBalancer." + this.getName() + ".triggeringLoadPerServerThreshold", 0.2d);
             }
-
             if (triggeringBlackoutPercentage == null) {
                 triggeringBlackoutPercentage = DynamicPropertyFactory.getInstance().getDoubleProperty(
                         "ZoneAwareNIWSDiscoveryLoadBalancer." + this.getName() + ".avoidZoneWithBlackoutPercetage", 0.99999d);
@@ -132,6 +134,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
                 String zone = ZoneAvoidanceRule.randomChooseZone(zoneSnapshot, availableZones);
                 logger.debug("Zone chosen: {}", zone);
                 if (zone != null) {
+                    // 根据zone获取loadBalancer
                     BaseLoadBalancer zoneLoadBalancer = getLoadBalancer(zone);
                     server = zoneLoadBalancer.chooseServer(key);
                 }
@@ -163,6 +166,9 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         return loadBalancer;        
     }
 
+    /**
+     * 复制rule
+     */
     private IRule cloneRule(IRule toClone) {
     	IRule rule;
     	if (toClone == null) {

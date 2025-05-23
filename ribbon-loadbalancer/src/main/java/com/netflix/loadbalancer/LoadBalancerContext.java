@@ -80,6 +80,7 @@ public class LoadBalancerContext implements IClientConfigAware {
         if (clientConfig == null) {
             return;    
         }
+        // 服务名称
         clientName = clientConfig.getClientName();
         if (clientName == null) {
             clientName = "default";
@@ -460,24 +461,21 @@ public class LoadBalancerContext implements IClientConfigAware {
             Pair<String, Integer> schemeAndPort = deriveSchemeAndPortFromPartialUri(original);        
             port = schemeAndPort.second();
         }
-        // Various Supported Cases
-        // The loadbalancer to use and the instances it has is based on how it was registered
-        // In each of these cases, the client might come in using Full Url or Partial URL
+        // 获取负载均衡器
         ILoadBalancer lb = getLoadBalancer();
+        // 服务名称为空
         if (host == null) {
             // Partial URI or no URI Case
             // well we have to just get the right instances from lb - or we fall back
             if (lb != null){
+                // 获取机器
                 Server svc = lb.chooseServer(loadBalancerKey);
                 if (svc == null){
-                    throw new ClientException(ClientException.ErrorType.GENERAL,
-                            "Load balancer does not have available server for client: "
-                                    + clientName);
+                    throw new ClientException(ClientException.ErrorType.GENERAL, "Load balancer does not have available server for client: " + clientName);
                 }
                 host = svc.getHost();
                 if (host == null){
-                    throw new ClientException(ClientException.ErrorType.GENERAL,
-                            "Invalid Server for :" + svc);
+                    throw new ClientException(ClientException.ErrorType.GENERAL, "Invalid Server for :" + svc);
                 }
                 logger.debug("{} using LB returned Server: {} for request {}", new Object[]{clientName, svc, original});
                 return svc;
@@ -487,6 +485,7 @@ public class LoadBalancerContext implements IClientConfigAware {
                 // if we have a vipAddress that came with the registration, we
                 // can use that else we
                 // bail out
+                // vpiAddresses
                 if (vipAddresses != null && vipAddresses.contains(",")) {
                     throw new ClientException(
                             ClientException.ErrorType.GENERAL,
@@ -526,7 +525,6 @@ public class LoadBalancerContext implements IClientConfigAware {
             // by passing in the full URL (including host and port), we should only
             // consult lb IFF the URL passed is registered as vipAddress in Discovery
             boolean shouldInterpretAsVip = false;
-
             if (lb != null) {
                 shouldInterpretAsVip = isVipRecognized(original.getAuthority());
             }
@@ -535,8 +533,7 @@ public class LoadBalancerContext implements IClientConfigAware {
                 if (svc != null){
                     host = svc.getHost();
                     if (host == null){
-                        throw new ClientException(ClientException.ErrorType.GENERAL,
-                                "Invalid Server for :" + svc);
+                        throw new ClientException(ClientException.ErrorType.GENERAL, "Invalid Server for :" + svc);
                     }
                     logger.debug("using LB returned Server: {} for request: {}", svc, original);
                     return svc;
@@ -555,7 +552,6 @@ public class LoadBalancerContext implements IClientConfigAware {
             throw new ClientException(ClientException.ErrorType.GENERAL,"Request contains no HOST to talk to");
         }
         // just verify that at this point we have a full URL
-
         return new Server(host, port);
     }
 
@@ -599,21 +595,6 @@ public class LoadBalancerContext implements IClientConfigAware {
             throw new RuntimeException(e);
         }
     }
-
-    /*
-    protected boolean isRetriable(T request) {
-        if (request.isRetriable()) {
-            return true;            
-        } else {
-            boolean retryOkayOnOperation = okToRetryOnAllOperations;
-            IClientConfig overriddenClientConfig = request.getOverrideConfig();
-            if (overriddenClientConfig != null) {
-                retryOkayOnOperation = overriddenClientConfig.getPropertyAsBoolean(CommonClientConfigKey.RequestSpecificRetryOn, okToRetryOnAllOperations);
-            }
-            return retryOkayOnOperation;
-        }
-    }
-     */
 
     protected int getRetriesNextServer(IClientConfig overriddenClientConfig) {
         int numRetries = maxAutoRetriesNextServer;

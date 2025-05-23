@@ -23,6 +23,8 @@ import rx.functions.Func1;
 import com.netflix.loadbalancer.Server;
 
 /**
+ * 函数式接口 Server -> Observable
+ *
  * Provide the {@link rx.Observable} for a specified server. Used by {@link com.netflix.loadbalancer.reactive.LoadBalancerCommand}
  *
  * @param <T> Output type

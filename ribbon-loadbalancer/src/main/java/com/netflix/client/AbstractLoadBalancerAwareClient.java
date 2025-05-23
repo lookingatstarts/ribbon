@@ -31,6 +31,8 @@ import com.netflix.loadbalancer.reactive.LoadBalancerCommand;
 import com.netflix.loadbalancer.reactive.ServerOperation;
 
 /**
+ * 支持负载均衡的client
+ *
  * Abstract class that provides the integration of client with load balancers.
  * 
  * @author awang
@@ -83,6 +85,8 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
     }
 
     /**
+     * FeignLoadBalancer继承了这个类
+     *
      * This method should be used when the caller wants to dispatch the request to a server chosen by
      * the load balancer, instead of specifying the server in the request's URI. 
      * It calculates the final URI by calling {@link #reconstructURIWithServer(com.netflix.loadbalancer.Server, java.net.URI)}
@@ -96,14 +100,15 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
         try {
             return command.submit(
                 new ServerOperation<T>() {
+                    // 执行发送请求
                     @Override
                     public Observable<T> call(Server server) {
                         URI finalUri = reconstructURIWithServer(server, request.getUri());
                         S requestForServer = (S) request.replaceUri(finalUri);
                         try {
                             return Observable.just(AbstractLoadBalancerAwareClient.this.execute(requestForServer, requestConfig));
-                        } 
-                        catch (Exception e) {
+                        } catch (Exception e) {
+                            // 执行出错
                             return Observable.error(e);
                         }
                     }
@@ -118,21 +123,23 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
                 throw new ClientException(e);
             }
         }
-        
     }
     
     public abstract RequestSpecificRetryHandler getRequestSpecificRetryHandler(S request, IClientConfig requestConfig);
 
+    // 构造请求命令
     protected LoadBalancerCommand<T> buildLoadBalancerCommand(final S request, final IClientConfig config) {
+        // 请求重试请求器
 		RequestSpecificRetryHandler handler = getRequestSpecificRetryHandler(request, config);
 		LoadBalancerCommand.Builder<T> builder = LoadBalancerCommand.<T>builder()
-				.withLoadBalancerContext(this)
-				.withRetryHandler(handler)
+				.withLoadBalancerContext(this) // LoadBalancerContext
+				.withRetryHandler(handler) // 重试策略
 				.withLoadBalancerURI(request.getUri());
 		customizeLoadBalancerCommandBuilder(request, config, builder);
 		return builder.build();
 	}
 
+    // 自定义
 	protected void customizeLoadBalancerCommandBuilder(final S request, final IClientConfig config,
 			final LoadBalancerCommand.Builder<T> builder) {
 		// do nothing by default, give a chance to its derived class to customize the builder
