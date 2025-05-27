@@ -69,7 +69,4 @@ public class BestAvailableRule extends ClientConfigEnabledRoundRobinRule {
             loadBalancerStats = ((AbstractLoadBalancer) lb).getLoadBalancerStats();            
         }
     }
-    
-    
-
 }

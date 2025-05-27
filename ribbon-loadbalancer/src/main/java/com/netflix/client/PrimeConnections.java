@@ -44,7 +44,8 @@ import com.netflix.servo.monitor.Stopwatch;
 import com.netflix.servo.monitor.Timer;
 
 /**
- * todo zbb
+ * 通过探测实例的接口，来确定服务是否可以接收服务请求
+ *
  * Prime the connections for a given Client (For those Client that
  * have a LoadBalancer that knows the set of Servers it will connect to) This is
  * mainly done to address those deployment environments (Read EC2) which benefit
@@ -143,11 +144,13 @@ public class PrimeConnections {
         } catch (Exception e) {
             logger.warn("Invalid maxTotalTimeToPrimeConnections");
         }
+        // prime连接
         primeConnectionsURI = String.valueOf(niwsClientConfig.getProperty(CommonClientConfigKey.PrimeConnectionsURI, primeConnectionsURI));
         float primeRatio = Float.parseFloat(String.valueOf(niwsClientConfig.getProperty(CommonClientConfigKey.MinPrimeConnectionsRatio)));
         className = niwsClientConfig.getPropertyAsString(CommonClientConfigKey.PrimeConnectionsClassName,
                 DefaultClientConfigImpl.DEFAULT_PRIME_CONNECTIONS_CLASS);
         try {
+            // 默认为HttpPrimeConnection
             connector = (IPrimeConnection) Class.forName(className).newInstance();
             connector.initWithNiwsConfig(niwsClientConfig);
         } catch (Exception e) {
@@ -174,6 +177,7 @@ public class PrimeConnections {
         this.maxTotalTimeToPrimeConnections = maxTotalTimeToPrimeConnections;
         this.primeConnectionsURIPath = primeConnectionsURI;        
         this.primeRatio = primeRatio;
+        // 异步线程池
         executorService = new ThreadPoolExecutor(1 /* minimum */,
                 maxExecutorThreads /* max threads */,
                 executorThreadTimeout /*
@@ -292,7 +296,6 @@ public class PrimeConnections {
             logger.debug("RestClient:" + name + ". No nodes/servers to prime connections");
             return Collections.emptyList();
         }        
-
         logger.info("Priming Connections for RestClient:" + name
                 + ", numServers:" + allServers.size());
         List<Future<Boolean>> ftList = new ArrayList<Future<Boolean>>();
@@ -330,6 +333,7 @@ public class PrimeConnections {
                 return connectToServer(s, listener);
             }
         };
+        // 提交线程池处理器
         return executorService.submit(ftConn);
     }
 

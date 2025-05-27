@@ -43,6 +43,7 @@ import com.netflix.servo.annotations.Monitor;
 import com.netflix.servo.monitor.Monitors;
 
 /**
+ * 监控统计
  * Class that acts as a repository of operational charateristics and statistics
  * of every Node/Server in the LaodBalancer.
  * 
@@ -285,14 +286,20 @@ public class LoadBalancerStats implements IClientConfigAware {
         if (servers == null || servers.size() == 0) {
             return new ZoneSnapshot();
         }
+        // 实例总数
         int instanceCount = servers.size();
+        // 总活跃连接数
         int activeConnectionsCount = 0;
+        // 可用实例活跃连接数
         int activeConnectionsCountOnAvailableServer = 0;
+        // 处于熔断的实例总数
         int circuitBreakerTrippedCount = 0;
         double loadPerServer = 0;
         long currentTime = System.currentTimeMillis();
         for (Server server: servers) {
-            ServerStats stat = getSingleServerStat(server);   
+            // 实例统计信息
+            ServerStats stat = getSingleServerStat(server);
+            // 实例处于熔断中
             if (stat.isCircuitBreakerTripped(currentTime)) {
                 circuitBreakerTrippedCount++;
             } else {
@@ -306,6 +313,7 @@ public class LoadBalancerStats implements IClientConfigAware {
                 loadPerServer = -1;
             }
         } else {
+            // 每台服务的负载
             loadPerServer = ((double) activeConnectionsCountOnAvailableServer) / (instanceCount - circuitBreakerTrippedCount);
         }
         return new ZoneSnapshot(instanceCount, circuitBreakerTrippedCount, activeConnectionsCount, loadPerServer);

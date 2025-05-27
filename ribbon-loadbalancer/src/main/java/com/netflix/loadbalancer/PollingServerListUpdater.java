@@ -25,17 +25,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PollingServerListUpdater implements ServerListUpdater {
 
     private static final Logger logger = LoggerFactory.getLogger(PollingServerListUpdater.class);
+    // 毫秒
+    private static final long LISTOFSERVERS_CACHE_UPDATE_DELAY = 1000; // msecs;
+    private static final int LISTOFSERVERS_CACHE_REPEAT_INTERVAL = 30 * 1000; // msecs;
 
-    private static long LISTOFSERVERS_CACHE_UPDATE_DELAY = 1000; // msecs;
-    private static int LISTOFSERVERS_CACHE_REPEAT_INTERVAL = 30 * 1000; // msecs;
-
+    // 懒加载
     private static class LazyHolder {
         private final static String CORE_THREAD = "DynamicServerListLoadBalancer.ThreadPoolSize";
+        // 线程池核心线程数
         private final static DynamicIntProperty poolSizeProp = new DynamicIntProperty(CORE_THREAD, 2);
         private static Thread _shutdownThread;
-
+        // 定时任务线程池
         static ScheduledThreadPoolExecutor _serverListRefreshExecutor = null;
-
         // 构造线程池
         static {
             int coreSize = poolSizeProp.get();
@@ -44,6 +45,7 @@ public class PollingServerListUpdater implements ServerListUpdater {
                     .setDaemon(true)
                     .build();
             _serverListRefreshExecutor = new ScheduledThreadPoolExecutor(coreSize, factory);
+            // 动态修改
             poolSizeProp.addCallback(new Runnable() {
                 @Override
                 public void run() {
@@ -60,20 +62,15 @@ public class PollingServerListUpdater implements ServerListUpdater {
             // 关闭线程池沟子方法
             Runtime.getRuntime().addShutdownHook(_shutdownThread);
         }
-
         private static void shutdownExecutorPool() {
             if (_serverListRefreshExecutor != null) {
                 _serverListRefreshExecutor.shutdown();
                 if (_shutdownThread != null) {
                     try {
                         Runtime.getRuntime().removeShutdownHook(_shutdownThread);
-                    } catch (IllegalStateException ise) { // NOPMD
-                        // this can happen if we're in the middle of a real
-                        // shutdown,
-                        // and that's 'ok'
+                    } catch (IllegalStateException ignore) {
                     }
                 }
-
             }
         }
     }
@@ -98,7 +95,9 @@ public class PollingServerListUpdater implements ServerListUpdater {
     }
 
     public PollingServerListUpdater(final long initialDelayMs, final long refreshIntervalMs) {
+        // 首次延迟执行
         this.initialDelayMs = initialDelayMs;
+        // 执行间隔
         this.refreshIntervalMs = refreshIntervalMs;
     }
 
@@ -117,13 +116,14 @@ public class PollingServerListUpdater implements ServerListUpdater {
                     try {
                         // 定时任务主动拉取服务列表
                         updateAction.doUpdate();
+                        // 上次执行完成时间
                         lastUpdated = System.currentTimeMillis();
                     } catch (Exception e) {
                         logger.warn("Failed one update cycle", e);
                     }
                 }
             };
-
+            // 定时任务执行
             scheduledFuture = getRefreshExecutor().scheduleWithFixedDelay(
                     wrapperRunnable,
                     initialDelayMs,

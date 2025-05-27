@@ -51,10 +51,8 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
                              .addFallbackPredicate(p2)
                              .addFallbackPredicate(AbstractServerPredicate.alwaysTrue())
                              .build();
-        
     }
-    
-    
+
     @Override
     public void initWithNiwsConfig(IClientConfig clientConfig) {
         ZoneAvoidancePredicate zonePredicate = new ZoneAvoidancePredicate(this, clientConfig);
@@ -97,11 +95,13 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
     }
 
     public static Set<String> getAvailableZones(
-            Map<String, ZoneSnapshot> snapshot, double triggeringLoad,
+            Map<String, ZoneSnapshot> snapshot,
+            double triggeringLoad,
             double triggeringBlackoutPercentage) {
         if (snapshot.isEmpty()) {
             return null;
         }
+        // 可用的zone
         Set<String> availableZones = new HashSet<String>(snapshot.keySet());
         if (availableZones.size() == 1) {
             return availableZones;
@@ -109,19 +109,18 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
         Set<String> worstZones = new HashSet<String>();
         double maxLoadPerServer = 0;
         boolean limitedZoneAvailability = false;
-
         for (Map.Entry<String, ZoneSnapshot> zoneEntry : snapshot.entrySet()) {
             String zone = zoneEntry.getKey();
             ZoneSnapshot zoneSnapshot = zoneEntry.getValue();
             int instanceCount = zoneSnapshot.getInstanceCount();
+            // 实例数为0，zone不可用
             if (instanceCount == 0) {
                 availableZones.remove(zone);
                 limitedZoneAvailability = true;
             } else {
                 double loadPerServer = zoneSnapshot.getLoadPerServer();
-                if (((double) zoneSnapshot.getCircuitTrippedCount())
-                        / instanceCount >= triggeringBlackoutPercentage
-                        || loadPerServer < 0) {
+                //
+                if (((double) zoneSnapshot.getCircuitTrippedCount()) / instanceCount >= triggeringBlackoutPercentage || loadPerServer < 0) {
                     availableZones.remove(zone);
                     limitedZoneAvailability = true;
                 } else {
@@ -147,7 +146,6 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
             availableZones.remove(zoneToAvoid);
         }
         return availableZones;
-
     }
 
     public static Set<String> getAvailableZones(LoadBalancerStats lbStats,

@@ -82,88 +82,48 @@ You should use {@link #getClientConfigWithDefaultValues(String, String)} - in th
  */
 public class DefaultClientConfigImpl implements IClientConfig {
 
+    // -----------------配置项默认值，配置项在IClientConfigKey------------------
     public static final Boolean DEFAULT_PRIORITIZE_VIP_ADDRESS_BASED_SERVERS = Boolean.TRUE;
-
 	public static final String DEFAULT_NFLOADBALANCER_PING_CLASSNAME = "com.netflix.loadbalancer.DummyPing"; // DummyPing.class.getName();
-
     public static final String DEFAULT_NFLOADBALANCER_RULE_CLASSNAME = "com.netflix.loadbalancer.AvailabilityFilteringRule";
-
     public static final String DEFAULT_NFLOADBALANCER_CLASSNAME = "com.netflix.loadbalancer.ZoneAwareLoadBalancer";
-    
     public static final boolean DEFAULT_USEIPADDRESS_FOR_SERVER = Boolean.FALSE;
-
     public static final String DEFAULT_CLIENT_CLASSNAME = "com.netflix.niws.client.http.RestClient";
-
     public static final String DEFAULT_VIPADDRESS_RESOLVER_CLASSNAME = "com.netflix.client.SimpleVipAddressResolver";
-
     public static final String DEFAULT_PRIME_CONNECTIONS_URI = "/";
-
     public static final int DEFAULT_MAX_TOTAL_TIME_TO_PRIME_CONNECTIONS = 30000;
-
     public static final int DEFAULT_MAX_RETRIES_PER_SERVER_PRIME_CONNECTION = 9;
-
     public static final Boolean DEFAULT_ENABLE_PRIME_CONNECTIONS = Boolean.FALSE;
-
     public static final int DEFAULT_MAX_REQUESTS_ALLOWED_PER_WINDOW = Integer.MAX_VALUE;
-
     public static final int DEFAULT_REQUEST_THROTTLING_WINDOW_IN_MILLIS = 60000;
-
     public static final Boolean DEFAULT_ENABLE_REQUEST_THROTTLING = Boolean.FALSE;
-
     public static final Boolean DEFAULT_ENABLE_GZIP_CONTENT_ENCODING_FILTER = Boolean.FALSE;
-
     public static final Boolean DEFAULT_CONNECTION_POOL_CLEANER_TASK_ENABLED = Boolean.TRUE;
-
     public static final Boolean DEFAULT_FOLLOW_REDIRECTS = Boolean.FALSE;
-
     public static final float DEFAULT_PERCENTAGE_NIWS_EVENT_LOGGED = 0.0f;
-
     public static final int DEFAULT_MAX_AUTO_RETRIES_NEXT_SERVER = 1;
-
     public static final int DEFAULT_MAX_AUTO_RETRIES = 0;
-
     public static final int DEFAULT_BACKOFF_INTERVAL = 0;
-    
     public static final int DEFAULT_READ_TIMEOUT = 5000;
-
     public static final int DEFAULT_CONNECTION_MANAGER_TIMEOUT = 2000;
-
     public static final int DEFAULT_CONNECT_TIMEOUT = 2000;
-
     public static final Boolean DEFAULT_ENABLE_CONNECTION_POOL = Boolean.TRUE;
-    
     @Deprecated
     public static final int DEFAULT_MAX_HTTP_CONNECTIONS_PER_HOST = 50;
-
     @Deprecated
     public static final int DEFAULT_MAX_TOTAL_HTTP_CONNECTIONS = 200;
-
     public static final int DEFAULT_MAX_CONNECTIONS_PER_HOST = 50;
-
     public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 200;
-
     public static final float DEFAULT_MIN_PRIME_CONNECTIONS_RATIO = 1.0f;
-
     public static final String DEFAULT_PRIME_CONNECTIONS_CLASS = "com.netflix.niws.client.http.HttpPrimeConnection";
-
     public static final String DEFAULT_SEVER_LIST_CLASS = "com.netflix.loadbalancer.ConfigurationBasedServerList";
-
     public static final String DEFAULT_SERVER_LIST_UPDATER_CLASS = "com.netflix.loadbalancer.PollingServerListUpdater";
-
     public static final int DEFAULT_CONNECTION_IDLE_TIMERTASK_REPEAT_IN_MSECS = 30000; // every half minute (30 secs)
-
     public static final int DEFAULT_CONNECTIONIDLE_TIME_IN_MSECS = 30000; // all connections idle for 30 secs
     
     protected volatile Map<String, Object> properties = new ConcurrentHashMap<String, Object>();
-    
-    protected Map<IClientConfigKey<?>, Object> typedProperties = new ConcurrentHashMap<IClientConfigKey<?>, Object>();
-
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultClientConfigImpl.class);
-
     private String clientName = null;
-
     private VipAddressResolver resolver = null;
-
     private boolean enableDynamicProperties = true;
     /**
      * Defaults for the parameters for the thread pool used by batchParallel
@@ -177,17 +137,14 @@ public class DefaultClientConfigImpl implements IClientConfig {
     public static final Boolean DEFAULT_ENABLE_ZONE_EXCLUSIVITY = Boolean.FALSE;
     public static final int DEFAULT_PORT = 7001;
     public static final Boolean DEFAULT_ENABLE_LOADBALANCER = Boolean.TRUE;
-
     public static final String DEFAULT_PROPERTY_NAME_SPACE = "ribbon";
-
+    // 默认的namespace为：ribbon
     private String propertyNameSpace = DEFAULT_PROPERTY_NAME_SPACE;
 
     public static final Boolean DEFAULT_OK_TO_RETRY_ON_ALL_OPERATIONS = Boolean.FALSE;
-
     public static final Boolean DEFAULT_ENABLE_NIWS_EVENT_LOGGING = Boolean.TRUE;
-
     public static final Boolean DEFAULT_IS_CLIENT_AUTH_REQUIRED = Boolean.FALSE;
-
+    //动态配置项
     private final Map<String, DynamicStringProperty> dynamicProperties = new ConcurrentHashMap<String, DynamicStringProperty>();
 
     public Boolean getDefaultPrioritizeVipAddressBasedServers() {
@@ -436,7 +393,6 @@ public class DefaultClientConfigImpl implements IClientConfig {
         putDefaultStringProperty(CommonClientConfigKey.NIWSServerListClassName, getDefaultSeverListClass());
         putDefaultStringProperty(CommonClientConfigKey.VipAddressResolverClassName, getDefaultVipaddressResolverClassname());
         putDefaultBooleanProperty(CommonClientConfigKey.IsClientAuthRequired, getDefaultIsClientAuthRequired());
-        // putDefaultStringProperty(CommonClientConfigKey.RequestIdHeaderName, getDefaultRequestIdHeaderName());
         putDefaultBooleanProperty(CommonClientConfigKey.UseIPAddrForServer, getDefaultUseIpAddressForServer());
         putDefaultStringProperty(CommonClientConfigKey.ListOfServers, "");
     }
@@ -507,6 +463,7 @@ public class DefaultClientConfigImpl implements IClientConfig {
 	// property exists. If so, that value is used, else the default value
 	// passed as argument is used to put into the properties member variable
     protected void putDefaultIntegerProperty(IClientConfigKey propName, Integer defaultValue) {
+        // 获取默认值
         Integer value = ConfigurationManager.getConfigInstance().getInteger(
                 getDefaultPropName(propName), defaultValue);
         setPropertyInternal(propName, value);
@@ -534,6 +491,8 @@ public class DefaultClientConfigImpl implements IClientConfig {
         setPropertyInternal(propName, value);
     }
 
+    // 默认配置项名称：ribbon.propName
+    // client.ribbon.propName
     String getDefaultPropName(String propName) {
         return getNameSpace() + "." + propName;
     }
@@ -541,7 +500,6 @@ public class DefaultClientConfigImpl implements IClientConfig {
     public String getDefaultPropName(IClientConfigKey propName) {
         return getDefaultPropName(propName.key());
     }
-
 
     protected void putDefaultStringProperty(IClientConfigKey propName, String defaultValue) {
         String value = ConfigurationManager.getConfigInstance().getString(
@@ -575,6 +533,7 @@ public class DefaultClientConfigImpl implements IClientConfig {
 	public void loadProperties(String restClientName){
         enableDynamicProperties = true;
         setClientName(restClientName);
+        // 加载默认值
         loadDefaultValues();
         Configuration props = ConfigurationManager.getConfigInstance().subset(restClientName);
         for (Iterator<String> keys = props.getKeys(); keys.hasNext(); ){
@@ -803,14 +762,12 @@ public class DefaultClientConfigImpl implements IClientConfig {
         props.setProperty( getInstancePropName(restClientName, key), value);
     }
 
-    public String getInstancePropName(String restClientName,
-            IClientConfigKey configKey) {
+    public String getInstancePropName(String restClientName, IClientConfigKey configKey) {
         return getInstancePropName(restClientName, configKey.key());
     }
 
     public String getInstancePropName(String restClientName, String key) {
-        return restClientName + "." + getNameSpace() + "."
-                + key;
+        return restClientName + "." + getNameSpace() + "." + key;
     }
 
 

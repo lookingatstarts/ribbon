@@ -20,6 +20,8 @@ package com.netflix.client;
 import com.netflix.loadbalancer.Server;
 
 /**
+ * 通过连接保证服务实例可用
+ *
  * Interface that defines operation for priming a connection.
  * 
  * @author awang

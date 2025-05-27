@@ -46,9 +46,7 @@ public class ZoneAvoidancePredicate extends  AbstractServerPredicate {
     private static final Logger logger = LoggerFactory.getLogger(ZoneAvoidancePredicate.class);
     
     private static final DynamicBooleanProperty ENABLED = DynamicPropertyFactory
-            .getInstance().getBooleanProperty(
-                    "niws.loadbalancer.zoneAvoidanceRule.enabled", true);
-
+            .getInstance().getBooleanProperty("niws.loadbalancer.zoneAvoidanceRule.enabled", true);
 
     public ZoneAvoidancePredicate(IRule rule, IClientConfig clientConfig) {
         super(rule, clientConfig);
@@ -69,11 +67,9 @@ public class ZoneAvoidancePredicate extends  AbstractServerPredicate {
         if (clientConfig != null) {
             triggeringLoad = DynamicPropertyFactory.getInstance().getDoubleProperty(
                     "ZoneAwareNIWSDiscoveryLoadBalancer." + clientConfig.getClientName() + ".triggeringLoadPerServerThreshold", 0.2d);
-
             triggeringBlackoutPercentage = DynamicPropertyFactory.getInstance().getDoubleProperty(
                     "ZoneAwareNIWSDiscoveryLoadBalancer." + clientConfig.getClientName() + ".avoidZoneWithBlackoutPercetage", 0.99999d);
         }
-        
     }
 
     @Override
@@ -101,10 +97,12 @@ public class ZoneAvoidancePredicate extends  AbstractServerPredicate {
             // The server zone is unknown to the load balancer, do not filter it out 
             return true;
         }
+        // 按照统计信息过滤性能好的zone
         logger.debug("Zone snapshots: {}", zoneSnapshot);
         Set<String> availableZones = ZoneAvoidanceRule.getAvailableZones(zoneSnapshot, triggeringLoad.get(), triggeringBlackoutPercentage.get());
         logger.debug("Available zones: {}", availableZones);
         if (availableZones != null) {
+            // 判断server的实例是否在其中
             return availableZones.contains(input.getServer().getZone());
         } else {
             return false;

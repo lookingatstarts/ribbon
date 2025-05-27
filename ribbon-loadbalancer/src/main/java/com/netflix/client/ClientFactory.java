@@ -205,18 +205,17 @@ public class ClientFactory {
     		IClientConfigAware obj = (IClientConfigAware) clazz.newInstance();
     		obj.initWithNiwsConfig(clientConfig);
     		return obj;
-    	} else {
-    		try {
-    		    if (clazz.getConstructor(IClientConfig.class) != null) {
-    		    	return clazz.getConstructor(IClientConfig.class).newInstance(clientConfig);
-    		    }
-    		} catch (NoSuchMethodException ignored) {
-    		    // OK for a class to not take an IClientConfig
-    		} catch (SecurityException | IllegalArgumentException | InvocationTargetException e) { 
-    		    logger.warn("Error getting/invoking IClientConfig constructor of {}", className, e);
-    		}    		
     	}
-    	logger.warn("Class " + className + " neither implements IClientConfigAware nor provides a constructor with IClientConfig as the parameter. Only default constructor will be used.");
+        try {
+            if (clazz.getConstructor(IClientConfig.class) != null) {
+                return clazz.getConstructor(IClientConfig.class).newInstance(clientConfig);
+            }
+        } catch (NoSuchMethodException ignored) {
+            // OK for a class to not take an IClientConfig
+        } catch (SecurityException | IllegalArgumentException | InvocationTargetException e) {
+            logger.warn("Error getting/invoking IClientConfig constructor of {}", className, e);
+        }
+        logger.warn("Class " + className + " neither implements IClientConfigAware nor provides a constructor with IClientConfig as the parameter. Only default constructor will be used.");
     	return clazz.newInstance();
     }
     

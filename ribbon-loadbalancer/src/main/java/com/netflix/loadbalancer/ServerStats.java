@@ -34,6 +34,8 @@ import com.netflix.stats.distribution.Distribution;
 import com.netflix.util.MeasuredRate;
 
 /**
+ * 监控统计信息
+ *
  * Capture various stats per Server(node) in the LoadBalancer
  * @author stonse
  *

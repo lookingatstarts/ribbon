@@ -52,7 +52,7 @@ For each request, the steps above will be repeated. That is to say, each zone re
  */
 public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLoadBalancer<T> {
 
-    // Map<zone,balancers>
+    // Map<zone,balancers> 缓存每个zone的loadBalancer
     private ConcurrentHashMap<String, BaseLoadBalancer> balancers = new ConcurrentHashMap<String, BaseLoadBalancer>();
     
     private static final Logger logger = LoggerFactory.getLogger(ZoneAwareLoadBalancer.class);
@@ -77,6 +77,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         super(clientConfig, rule, ping, serverList, filter);
     }
 
+    //  openFeign自动配置
     public ZoneAwareLoadBalancer(IClientConfig clientConfig, IRule rule,
                                  IPing ping, ServerList<T> serverList, ServerListFilter<T> filter,
                                  ServerListUpdater serverListUpdater) {
@@ -87,9 +88,10 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         super(niwsClientConfig);
     }
 
-    // 定时任务更新实例的时候调用
+    // 定时任务更新实例的时候调用 key=zone
     @Override
     protected void setServerListForZones(Map<String, List<Server>> zoneServersMap) {
+        // 更新统计信
         super.setServerListForZones(zoneServersMap);
         if (balancers == null) {
             balancers = new ConcurrentHashMap<String, BaseLoadBalancer>();
@@ -97,6 +99,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         // Map<zone,实例列表>
         for (Map.Entry<String, List<Server>> entry: zoneServersMap.entrySet()) {
         	String zone = entry.getKey().toLowerCase();
+            // 更新实例
             getLoadBalancer(zone).setServersList(entry.getValue());
         }
         // check if there is any zone that no longer has a server
@@ -107,17 +110,24 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
                 existingLBEntry.getValue().setServersList(Collections.emptyList());
             }
         }
-    }    
-        
+    }
+
+    /**
+     * 负载均衡选在一台实例
+     * 最终都会走到rule选择一台实例
+     */
     @Override
     public Server chooseServer(Object key) {
+        // 只有一个zone
         if (!ENABLED.get() || getLoadBalancerStats().getAvailableZones().size() <= 1) {
             logger.debug("Zone aware logic disabled or there is only one zone");
             return super.chooseServer(key);
         }
         Server server = null;
         try {
+            // 统计信息
             LoadBalancerStats lbStats = getLoadBalancerStats();
+            // 快照统计信息
             Map<String, ZoneSnapshot> zoneSnapshot = ZoneAvoidanceRule.createSnapshot(lbStats);
             logger.debug("Zone snapshots: {}", zoneSnapshot);
             if (triggeringLoad == null) {
@@ -128,6 +138,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
                 triggeringBlackoutPercentage = DynamicPropertyFactory.getInstance().getDoubleProperty(
                         "ZoneAwareNIWSDiscoveryLoadBalancer." + this.getName() + ".avoidZoneWithBlackoutPercetage", 0.99999d);
             }
+            // 动态判断可用的zone
             Set<String> availableZones = ZoneAvoidanceRule.getAvailableZones(zoneSnapshot, triggeringLoad.get(), triggeringBlackoutPercentage.get());
             logger.debug("Available zones: {}", availableZones);
             if (availableZones != null &&  availableZones.size() < zoneSnapshot.keySet().size()) {
@@ -154,15 +165,18 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
     BaseLoadBalancer getLoadBalancer(String zone) {
         zone = zone.toLowerCase();
         BaseLoadBalancer loadBalancer = balancers.get(zone);
+        // 创建BaseLoadBalancer
         if (loadBalancer == null) {
         	// We need to create rule object for load balancer for each zone
+            // 为每个zone创建一个load balancer
         	IRule rule = cloneRule(this.getRule());
+            // 把LoadBalancerStats传递给BaseLoadBalancer
             loadBalancer = new BaseLoadBalancer(this.getName() + "_" + zone, rule, this.getLoadBalancerStats());
             BaseLoadBalancer prev = balancers.putIfAbsent(zone, loadBalancer);
             if (prev != null) {
             	loadBalancer = prev;
             }
-        } 
+        }
         return loadBalancer;        
     }
 
@@ -190,6 +204,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         super.setRule(rule);
         if (balancers != null) {
             for (String zone: balancers.keySet()) {
+                // 设置rule
                 balancers.get(zone).setRule(cloneRule(rule));
             }
         }

@@ -32,6 +32,7 @@ import java.util.List;
 public interface ILoadBalancer {
 
 	/**
+	 * 添加实例
 	 * Initial list of servers.
 	 * This API also serves to add additional ones at a later time
 	 * The same logical server (host:port) could essentially be added multiple times
@@ -43,6 +44,8 @@ public interface ILoadBalancer {
 	
 	/**
 	 * Choose a server from load balancer.
+	 *
+	 * 选择一台实例
 	 * 
 	 * @param key An object that the load balancer may use to determine which server to return. null if 
 	 *         the load balancer does not use this parameter.

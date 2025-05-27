@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * 轮询算法
+ *
  * The most well known and basic load balancing strategy, i.e. Round Robin Rule.
  *
  * @author stonse
@@ -33,11 +35,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RoundRobinRule extends AbstractLoadBalancerRule {
 
-    private AtomicInteger nextServerCyclicCounter;
     private static final boolean AVAILABLE_ONLY_SERVERS = true;
     private static final boolean ALL_SERVERS = false;
-
-    private static Logger log = LoggerFactory.getLogger(RoundRobinRule.class);
+    private static final Logger log = LoggerFactory.getLogger(RoundRobinRule.class);
+    // 自增循环器
+    private final AtomicInteger nextServerCyclicCounter;
 
     public RoundRobinRule() {
         nextServerCyclicCounter = new AtomicInteger(0);
@@ -45,6 +47,7 @@ public class RoundRobinRule extends AbstractLoadBalancerRule {
 
     public RoundRobinRule(ILoadBalancer lb) {
         this();
+        // 设置负载均衡器
         setLoadBalancer(lb);
     }
 
@@ -53,48 +56,46 @@ public class RoundRobinRule extends AbstractLoadBalancerRule {
             log.warn("no load balancer");
             return null;
         }
-
         Server server = null;
         int count = 0;
-        while (server == null && count++ < 10) {
+        while (count++ < 10) {
+            // 获取所有达到机器
             List<Server> reachableServers = lb.getReachableServers();
             List<Server> allServers = lb.getAllServers();
             int upCount = reachableServers.size();
             int serverCount = allServers.size();
-
+            // 没有可用机器
             if ((upCount == 0) || (serverCount == 0)) {
                 log.warn("No up servers available from load balancer: " + lb);
                 return null;
             }
-
             int nextServerIndex = incrementAndGetModulo(serverCount);
             server = allServers.get(nextServerIndex);
-
+            // 可能为空
             if (server == null) {
                 /* Transient. */
                 Thread.yield();
                 continue;
             }
-
+            //‘ 机器必须是alive且 readyToServe
             if (server.isAlive() && (server.isReadyToServe())) {
                 return (server);
             }
-
             // Next.
             server = null;
         }
-
+        // 自旋10次还未选出，输出日志
         if (count >= 10) {
-            log.warn("No available alive servers after 10 tries from load balancer: "
-                    + lb);
+            log.warn("No available alive servers after 10 tries from load balancer: " + lb);
         }
         return server;
     }
 
     /**
+     *
      * Inspired by the implementation of {@link AtomicInteger#incrementAndGet()}.
      *
-     * @param modulo The modulo to bound the value of the counter.
+     * @param modulo The modulo to bound the value of the counter. 模数
      * @return The next value.
      */
     private int incrementAndGetModulo(int modulo) {
@@ -111,6 +112,7 @@ public class RoundRobinRule extends AbstractLoadBalancerRule {
         return choose(getLoadBalancer(), key);
     }
 
+    // 初始化
     @Override
     public void initWithNiwsConfig(IClientConfig clientConfig) {
     }

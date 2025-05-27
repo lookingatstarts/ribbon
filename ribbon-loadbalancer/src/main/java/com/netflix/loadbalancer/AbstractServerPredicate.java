@@ -32,6 +32,8 @@ import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.PredicateKey;
 
 /**
+ * Predicate: 断言
+ *
  * A basic building block for server filtering logic which can be used in rules and server list filters.
  * The input object of the predicate is {@link PredicateKey}, which has Server and load balancer key
  * information. Therefore, it is possible to develop logic to filter servers by both Server and load balancer
@@ -41,8 +43,10 @@ import com.netflix.loadbalancer.PredicateKey;
  *
  */
 public abstract class AbstractServerPredicate implements Predicate<PredicateKey> {
-    
+
+    // 负载均衡算法
     protected IRule rule;
+    // 统计信息
     private volatile LoadBalancerStats lbStats;
     private final Random random = new Random();
     private final AtomicInteger nextIndex = new AtomicInteger();
@@ -85,18 +89,18 @@ public abstract class AbstractServerPredicate implements Predicate<PredicateKey>
     protected LoadBalancerStats getLBStats() {
         if (lbStats != null) {
             return lbStats;
-        } else if (rule != null) {
-            ILoadBalancer lb = rule.getLoadBalancer();
-            if (lb instanceof AbstractLoadBalancer) {
-                LoadBalancerStats stats =  ((AbstractLoadBalancer) lb).getLoadBalancerStats();
-                setLoadBalancerStats(stats);
-                return stats;
-            } else {
-                return null;
-            }
-        } else {
+        }
+        if (rule == null) {
             return null;
         }
+        // 从LoadBalancer中获取LoadBalancerStats
+        ILoadBalancer lb = rule.getLoadBalancer();
+        if (lb instanceof AbstractLoadBalancer) {
+            LoadBalancerStats stats =  ((AbstractLoadBalancer) lb).getLoadBalancerStats();
+            setLoadBalancerStats(stats);
+            return stats;
+        }
+        return null;
     }
     
     public void setLoadBalancerStats(LoadBalancerStats stats) {
@@ -114,7 +118,8 @@ public abstract class AbstractServerPredicate implements Predicate<PredicateKey>
     /**
      * Get servers filtered by this predicate from list of servers. Load balancer key
      * is presumed to be null. 
-     * 
+     * Eligible: 有资格的
+     * loadBalancerKey为null
      * @see #getEligibleServers(List, Object)
      * 
      */
@@ -123,6 +128,8 @@ public abstract class AbstractServerPredicate implements Predicate<PredicateKey>
     }
  
     /**
+     * 指定loadBalancerKey
+     * 根据一定条件过滤server，在根据IRule算法选出一台server
      * Get servers filtered by this predicate from list of servers. 
      */
     public List<Server> getEligibleServers(List<Server> servers, Object loadBalancerKey) {
@@ -206,6 +213,8 @@ public abstract class AbstractServerPredicate implements Predicate<PredicateKey>
     }
         
     /**
+     * 指定断言条件，创建AbstractServerPredicate对象
+     *
      * Create an instance from a predicate.
      */
     public static AbstractServerPredicate ofKeyPredicate(final Predicate<PredicateKey> p) {

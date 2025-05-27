@@ -27,7 +27,8 @@ import com.netflix.client.IClientConfigAware;
 public abstract class AbstractLoadBalancerRule implements IRule, IClientConfigAware {
 
     private ILoadBalancer lb;
-        
+
+    // 赋值ILoadBalancer
     @Override
     public void setLoadBalancer(ILoadBalancer lb){
         this.lb = lb;

@@ -94,6 +94,7 @@ public class LoadBalancerContext implements IClientConfigAware {
         Monitors.registerObject("Client_" + clientName, this);
     }
 
+    // 监控追踪器
     public Timer getExecuteTracer() {
         if (tracer == null) {
             synchronized(this) {
@@ -101,7 +102,7 @@ public class LoadBalancerContext implements IClientConfigAware {
                     tracer = Monitors.newTimer(clientName + "_LoadBalancerExecutionTimer", TimeUnit.MILLISECONDS);                    
                 }
             }
-        } 
+        }
         return tracer;        
     }
 
@@ -235,6 +236,7 @@ public class LoadBalancerContext implements IClientConfigAware {
         return niwsClientException;
     }
 
+    // 统计数据
     private void recordStats(ServerStats stats, long responseTime) {
     	if (stats == null) {
     		return;
@@ -253,10 +255,14 @@ public class LoadBalancerContext implements IClientConfigAware {
     
     
     /**
+     * 请求正常返回或抛出异常都会调用该方法，进行统计数据
+     *
      * This is called after a response is received or an exception is thrown from the client
      * to update related stats.  
      */
-    public void noteRequestCompletion(ServerStats stats, Object response, Throwable e, long responseTime, RetryHandler errorHandler) {
+    public void noteRequestCompletion(ServerStats stats, Object response,
+                                      Throwable e, long responseTime,
+                                      RetryHandler errorHandler) {
     	if (stats == null) {
     		return;
     	}
@@ -329,6 +335,7 @@ public class LoadBalancerContext implements IClientConfigAware {
             return;
         }
         try {
+            // 活跃请求数+1
             serverStats.incrementActiveRequestsCount();
         } catch (Exception ex) {
             logger.error("Error noting stats for client {}", clientName, ex);

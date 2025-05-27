@@ -70,6 +70,7 @@ public class AvailabilityPredicate extends  AbstractServerPredicate {
         if (stats == null) {
             return true;
         }
+        // 该server是否发生熔断
         return !shouldSkipServer(stats.getSingleServerStat(input.getServer()));
     }
     

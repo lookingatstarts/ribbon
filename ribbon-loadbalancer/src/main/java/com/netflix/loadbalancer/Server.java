@@ -31,11 +31,12 @@ import com.netflix.util.Pair;
 public class Server {
 
     /**
+     * 服务元数据
      * Additional meta information of a server, which contains
      * information of the targeting application, as well as server identification
      * specific for a deployment environment, for example, AWS.
      */
-    public static interface MetaInfo {
+    public interface MetaInfo {
         /**
          * @return the name of application that runs on this server, null if not available
          */
@@ -66,14 +67,16 @@ public class Server {
     private int port = 80;
     // https/http
     private String scheme;
+    // 实例ID
     private volatile String id;
+    // 机器是否可用
     private volatile boolean isAliveFlag;
     // 区域
     private String zone = UNKNOWN_ZONE;
-    // 是否可接收请求
+    // 是否可接收请求，默认为true
     private volatile boolean readyToServe = true;
     // 元数据
-    private MetaInfo simpleMetaInfo = new MetaInfo() {
+    private final MetaInfo simpleMetaInfo = new MetaInfo() {
         @Override
         public String getAppName() {
             return null;

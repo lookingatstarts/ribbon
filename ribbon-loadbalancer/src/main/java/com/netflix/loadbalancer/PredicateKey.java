@@ -18,6 +18,8 @@
 package com.netflix.loadbalancer;
 
 /**
+ * 断言key
+ *
  * The input object of predicates of class {@link AbstractServerPredicate}.
  * It includes Server and an Object as load balancer key used in {@link IRule#choose(Object)},
  * which might be null. 
@@ -26,7 +28,7 @@ package com.netflix.loadbalancer;
  *
  */
 public class PredicateKey {
-    // 负载均衡key
+    // 负载均衡key，可能为null
     private Object loadBalancerKey;
     // 服务实例
     private Server server;

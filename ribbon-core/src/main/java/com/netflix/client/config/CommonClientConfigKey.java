@@ -28,6 +28,9 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+/**
+ * 配置项key
+ */
 public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
 
     public static final IClientConfigKey<String> AppName = new CommonClientConfigKey<String>("AppName"){};
@@ -252,6 +255,7 @@ public abstract class CommonClientConfigKey<T> implements IClientConfigKey<T> {
         checkArgument(superclass instanceof ParameterizedType,
             "%s isn't parameterized", superclass);
         Type runtimeType = ((ParameterizedType) superclass).getActualTypeArguments()[0];
+        // 类型
         type = (Class<T>) TypeToken.of(runtimeType).getRawType();
     }
     

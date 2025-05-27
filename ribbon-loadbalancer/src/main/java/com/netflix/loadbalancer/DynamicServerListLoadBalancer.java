@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * 支持动态实例列表
+ *
  * A LoadBalancer that has the capabilities to obtain the candidate list of
  * servers using a dynamic source. i.e. The list of servers can potentially be
  * changed at Runtime. It also contains facilities wherein the list of servers
@@ -48,22 +50,21 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     // 没有用处
     boolean isSecure = false;
     boolean useTunnel = false;
-
     // to keep track of modification of server lists
-    // 防止多个线程修改服务实例列表
+    // 防止多个线程修改服务实例列表，可以看作一把锁
     protected AtomicBoolean serverListUpdateInProgress = new AtomicBoolean(false);
     // 提供服务列表：1、Nacos提供了实现 2、ConfigurationBasedServerList通过配置文件方式实现
     volatile ServerList<T> serverListImpl;
     // 对ServerList进行过滤，默认实现：ZoneAffinityServerListFilter
     volatile ServerListFilter<T> filter;
-    // 更新操作
+    // 更新操作: 实例列表
     protected final ServerListUpdater.UpdateAction updateAction = new ServerListUpdater.UpdateAction() {
         @Override
         public void doUpdate() {
             updateListOfServers();
         }
     };
-    // ServerList更新器
+    // ServerList更新器，调用updateAction，PollingServerListUpdater默认实现
     protected volatile ServerListUpdater serverListUpdater;
 
     public DynamicServerListLoadBalancer() {
@@ -90,6 +91,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         this.serverListImpl = serverList;
         this.filter = filter;
         this.serverListUpdater = serverListUpdater;
+        // 服务过滤器
         if (filter instanceof AbstractServerListFilter) {
             ((AbstractServerListFilter) filter).setLoadBalancerStats(getLoadBalancerStats());
         }
@@ -103,6 +105,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     @Override
     public void initWithNiwsConfig(IClientConfig clientConfig) {
         try {
+            // 调用父类
             super.initWithNiwsConfig(clientConfig);
             String niwsServerListClassName = clientConfig.getPropertyAsString(
                     CommonClientConfigKey.NIWSServerListClassName,
@@ -142,10 +145,10 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         this.setEnablePrimingConnections(false);
         // 开启启动更新实例任务
         enableAndInitLearnNewServersFeature();
+        // 拉取实例
         updateListOfServers();
         if (primeConnection && this.getPrimeConnections() != null) {
-            this.getPrimeConnections()
-                    .primeConnections(getReachableServers());
+            this.getPrimeConnections().primeConnections(getReachableServers());
         }
         this.setEnablePrimingConnections(primeConnection);
         LOGGER.info("DynamicServerListLoadBalancer for client {} initialized: {}", clientConfig.getClientName(), this.toString());
@@ -158,10 +161,10 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     public void setServersList(List lsrv) {
         super.setServersList(lsrv);
         List<T> serverList = (List<T>) lsrv;
+        // key= zone 服务实例所在机房区域
         Map<String, List<Server>> serversInZones = new HashMap<String, List<Server>>();
         for (Server server : serverList) {
-            // make sure ServerStats is created to avoid creating them on hot
-            // path
+            // 统计
             getLoadBalancerStats().getSingleServerStat(server);
             String zone = server.getZone();
             if (zone != null) {
@@ -177,8 +180,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         setServerListForZones(serversInZones);
     }
 
-    protected void setServerListForZones(
-            Map<String, List<Server>> zoneServersMap) {
+    protected void setServerListForZones(Map<String, List<Server>> zoneServersMap) {
         LOGGER.debug("Setting server list for zones: {}", zoneServersMap);
         getLoadBalancerStats().updateZoneServerMapping(zoneServersMap);
     }
@@ -210,7 +212,6 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     @Override
     /**
      * Makes no sense to ping an inmemory disc client
-     * 
      */
     public void forceQuickPing() {
         // no-op
@@ -243,13 +244,10 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         if (serverListImpl != null) {
             // 重新拉去配置
             servers = serverListImpl.getUpdatedListOfServers();
-            LOGGER.debug("List of Servers for {} obtained from Discovery client: {}",
-                    getIdentifier(), servers);
-
+            LOGGER.debug("List of Servers for {} obtained from Discovery client: {}", getIdentifier(), servers);
             if (filter != null) {
                 servers = filter.getFilteredListOfServers(servers);
-                LOGGER.debug("Filtered List of Servers for {} obtained from Discovery client: {}",
-                        getIdentifier(), servers);
+                LOGGER.debug("Filtered List of Servers for {} obtained from Discovery client: {}", getIdentifier(), servers);
             }
         }
         updateAllServerList(servers);

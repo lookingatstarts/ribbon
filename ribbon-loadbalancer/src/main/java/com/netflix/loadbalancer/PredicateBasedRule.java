@@ -47,11 +47,11 @@ public abstract class PredicateBasedRule extends ClientConfigEnabledRoundRobinRu
         ILoadBalancer lb = getLoadBalancer();
         // 获取所有机器
         List<Server> allServers = lb.getAllServers();
+        // 获取断言条件过滤server，在轮询获取一个实例
         Optional<Server> server = getPredicate().chooseRoundRobinAfterFiltering(allServers, key);
         if (server.isPresent()) {
             return server.get();
-        } else {
-            return null;
-        }       
+        }
+        return null;
     }
 }

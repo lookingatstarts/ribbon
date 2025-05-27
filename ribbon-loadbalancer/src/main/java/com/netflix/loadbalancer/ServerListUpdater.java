@@ -8,6 +8,7 @@ package com.netflix.loadbalancer;
  */
 public interface ServerListUpdater {
 
+    // 更新机器列表操作
     /**
      * an interface for the updateAction that actually executes a server list update
      */
@@ -17,6 +18,7 @@ public interface ServerListUpdater {
 
 
     /**
+     * 启动
      * start the serverList updater with the given update action
      * This call should be idempotent.
      *

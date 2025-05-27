@@ -28,6 +28,8 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 
 /**
+ * 组合一条链式断言条件
+ *
  * A predicate that is composed from one or more predicates in "AND" relationship.
  * It also has the functionality of "fallback" to one of more different predicates.
  * If the primary predicate yield too few filtered servers from the {@link #getEligibleServers(List, Object)}
@@ -39,10 +41,10 @@ import com.google.common.collect.Lists;
  */
 public class CompositePredicate extends AbstractServerPredicate {
 
-    // 委托
+    // 委托对象
     private AbstractServerPredicate delegate;
     // fallback
-    private List<AbstractServerPredicate> fallbacks = Lists.newArrayList();
+    private final List<AbstractServerPredicate> fallbacks = Lists.newArrayList();
     private int minimalFilteredServers = 1;
     private float minimalFilteredPercentage = 0;
 
@@ -102,10 +104,10 @@ public class CompositePredicate extends AbstractServerPredicate {
      */
     @Override
     public List<Server> getEligibleServers(List<Server> servers, Object loadBalancerKey) {
-        // 调用父类的方法
         List<Server> result = super.getEligibleServers(servers, loadBalancerKey);
         Iterator<AbstractServerPredicate> i = fallbacks.iterator();
-        // 继续过滤
+        // 如果断言过滤后的机器数不满足，使用fallback断言
+        // 本质就是delegate过滤的机器数<minimalFilteredServers || <= 一定比例时，使用fallback过滤
         while (!(result.size() >= minimalFilteredServers &&
                 result.size() > (int) (servers.size() * minimalFilteredPercentage))
                 && i.hasNext()) {

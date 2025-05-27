@@ -62,8 +62,6 @@ public class RetryRule extends AbstractLoadBalancerRule {
 		return maxRetryMillis;
 	}
 
-	
-	
 	@Override
 	public void setLoadBalancer(ILoadBalancer lb) {		
 		super.setLoadBalancer(lb);

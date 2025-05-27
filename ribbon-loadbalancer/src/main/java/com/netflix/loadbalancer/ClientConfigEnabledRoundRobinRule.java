@@ -28,7 +28,7 @@ import com.netflix.client.config.IClientConfig;
  */
 public class ClientConfigEnabledRoundRobinRule extends AbstractLoadBalancerRule {
 
-    // 默认使用论选算法
+    // 轮询算法，通过LoadBalance获取服务实例列表
     RoundRobinRule roundRobinRule = new RoundRobinRule();
 
     @Override
@@ -46,10 +46,7 @@ public class ClientConfigEnabledRoundRobinRule extends AbstractLoadBalancerRule 
     public Server choose(Object key) {
         if (roundRobinRule != null) {
             return roundRobinRule.choose(key);
-        } else {
-            throw new IllegalArgumentException(
-                    "This class has not been initialized with the RoundRobinRule class");
         }
+        throw new IllegalArgumentException("This class has not been initialized with the RoundRobinRule class");
     }
-
 }

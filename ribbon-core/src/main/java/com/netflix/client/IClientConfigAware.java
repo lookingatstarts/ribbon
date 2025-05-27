@@ -20,6 +20,8 @@ package com.netflix.client;
 import com.netflix.client.config.IClientConfig;
 
 /**
+ * IClientConfig装配
+ *
  * There are multiple classes (and components) that need access to the configuration.
  * Its easier to do this by using {@link IClientConfig} as the object that carries these configurations
  * and to define a common interface that components that need this can implement and hence be aware of.
