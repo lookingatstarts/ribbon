@@ -238,6 +238,10 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         }
     }
 
+    /**
+     * 1、定时任务调用
+     * 2、对象LoadBalancer对象时
+     */
     @VisibleForTesting
     public void updateListOfServers() {
         List<T> servers = new ArrayList<T>();

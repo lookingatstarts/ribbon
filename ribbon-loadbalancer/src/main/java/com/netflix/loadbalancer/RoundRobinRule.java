@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 轮询算法
  *
+ * 只有roundRobinRule使用server中readyToServe字段，进行过滤服务实例
+ *
  * The most well known and basic load balancing strategy, i.e. Round Robin Rule.
  *
  * @author stonse

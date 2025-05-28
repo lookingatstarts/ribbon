@@ -20,8 +20,10 @@ package com.netflix.client;
 import com.netflix.loadbalancer.Server;
 
 /**
- * 通过连接保证服务实例可用
+ * 通过连接保证服务实例可用，测试能够连接上实例
  *
+ * ILoadBalancer包内没有它的实现类，ribbon-client中有一个实现类：HttpPrimeConnection
+ * 定义连接实例操作
  * Interface that defines operation for priming a connection.
  * 
  * @author awang
@@ -39,5 +41,4 @@ public interface IPrimeConnection extends IClientConfigAware {
 	 * @throws Exception Any network errors
 	 */
     public boolean connect(Server server, String uriPath) throws Exception;
-
 }

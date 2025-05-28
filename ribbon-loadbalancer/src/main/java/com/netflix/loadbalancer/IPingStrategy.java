@@ -7,6 +7,7 @@ package com.netflix.loadbalancer;
  * want your servers to be pinged in parallel. <b>Please note,
  * that implementations of this interface should be immutable.</b>
  *
+ * 批量ping服务实例策略
  * @author Dmitry_Cherkas
  * @see Server
  * @see IPing

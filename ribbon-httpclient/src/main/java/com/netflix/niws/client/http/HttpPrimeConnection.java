@@ -32,8 +32,11 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.params.HttpConnectionParams;
 
 /**
+ * 默认实现类
  * An implementation of {@link IPrimeConnection} using Apache HttpClient.
- * 
+ *
+ * 使用Apache http 发送一个GET请求，只要2s内能和server建立连接，则server可提供服务
+ *
  * @author awang
  *
  */
@@ -45,14 +48,18 @@ public class HttpPrimeConnection implements IPrimeConnection {
     
     public HttpPrimeConnection() {
     }
-    
+
+    /**
+     * 发送一个get请求，只要connect连接上了，就表示成功了（状态码无所谓，因为只是测试connect连接性）
+     */
     @Override
     public boolean connect(Server server, String primeConnectionsURIPath) throws Exception {
         String url = "http://" + server.getHostPort() + primeConnectionsURIPath;
         logger.debug("Trying URL: {}", url);
         HttpUriRequest get = new HttpGet(url);
-        HttpResponse response = null;
+        HttpResponse response;
         try {
+            // 执行一个http GET请求，不判断返回值，仅仅确保可以连接上实例就行
             response = client.execute(get);
             if (logger.isDebugEnabled() && response.getStatusLine() != null) {
                 logger.debug("Response code:" + response.getStatusLine().getStatusCode());
@@ -60,11 +67,16 @@ public class HttpPrimeConnection implements IPrimeConnection {
         } finally {
            get.abort();
         }
+        // 不抛出异常即为成功
         return true;
     }
 
+    /**
+     * 初始化
+     */
     @Override
     public void initWithNiwsConfig(IClientConfig niwsClientConfig) {
+        // 超时时间为2s
         client = NFHttpClientFactory.getNamedNFHttpClient(niwsClientConfig.getClientName() + "-PrimeConnsClient", false); 
         HttpConnectionParams.setConnectionTimeout(client.getParams(), 2000);        
     }

@@ -18,16 +18,19 @@
 package com.netflix.loadbalancer;
 
 /**
+ * 常量方式：写死
+ *
  * A utility Ping Implementation that returns whatever its been set to return
  * (alive or dead)
  * @author stonse
  *
  */
 public class PingConstant implements IPing {
+
 		boolean constant = true;
 
 		public void setConstant(String constantStr) {
-				constant = (constantStr != null) && (constantStr.toLowerCase().equals("true"));
+			constant = (constantStr != null) && (constantStr.toLowerCase().equals("true"));
 		}
 
 		public void setConstant(boolean constant) {

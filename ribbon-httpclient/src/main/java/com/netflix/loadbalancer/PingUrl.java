@@ -33,7 +33,8 @@ import java.io.IOException;
  * Ping implementation if you want to do a "health check" kind of Ping. This
  * will be a "real" ping. As in a real http/s call is made to this url e.g.
  * http://ec2-75-101-231-85.compute-1.amazonaws.com:7101/cs/hostRunning
- * 
+ *
+ * 通过发送GET请求
  * Some services/clients choose PingDiscovery - which is quick but is not a real
  * ping. i.e It just asks discovery (eureka) in-memory cache if the server is present
  * in its Roster PingUrl on the other hand, makes an actual call. This is more
@@ -47,21 +48,10 @@ import java.io.IOException;
  */
 public class PingUrl implements IPing {
     private static final Logger LOGGER = LoggerFactory.getLogger(PingUrl.class);
-
 		String pingAppendString = "";
 		boolean isSecure = false;
-		
 		String expectedContent = null;
 
-		/*
-		 *
-		 * Send one ping only.
-		 *
-		 * Well, send what you need to determine whether or not the
-		 * server is still alive.  Should return within a "reasonable"
-		 * time.
-		 */
-		
 		public PingUrl() {
 		}
 		
@@ -115,16 +105,16 @@ public class PingUrl implements IPing {
 					urlStr = "http://";
 				}
 				urlStr += server.getId();
+				// ping的接口url
 				urlStr += getPingAppendString();
-
 				boolean isAlive = false;
-
 				HttpClient httpClient = new DefaultHttpClient();
 				HttpUriRequest getRequest = new HttpGet(urlStr);
 				String content=null;
 				try {
 					HttpResponse response = httpClient.execute(getRequest);
 					content = EntityUtils.toString(response.getEntity());
+					// 接口状态码为200
 					isAlive = (response.getStatusLine().getStatusCode() == 200);
 					if (getExpectedContent()!=null){
 						LOGGER.debug("content:" + content);
@@ -141,19 +131,8 @@ public class PingUrl implements IPing {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}finally{
-					// Release the connection.
 					getRequest.abort();
 				}
-
 				return isAlive;
-		}
-		
-		public static void main(String[] args){
-		    PingUrl p = new PingUrl(false,"/cs/hostRunning");
-		    p.setExpectedContent("true");
-		    Server s = new Server("ec2-75-101-231-85.compute-1.amazonaws.com", 7101);
-		    
-		    boolean isAlive = p.isAlive(s);
-		    System.out.println("isAlive:" + isAlive);
 		}
 }

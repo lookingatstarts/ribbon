@@ -21,6 +21,7 @@ package com.netflix.loadbalancer;
  * Interface that defines how we "ping" a server to check if its alive
  * @author stonse
  *
+ * 心跳检测
  */
 public interface IPing {
     

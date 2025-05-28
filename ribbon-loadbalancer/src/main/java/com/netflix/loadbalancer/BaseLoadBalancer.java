@@ -82,6 +82,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
     protected volatile List<Server> allServerList = Collections.synchronizedList(new ArrayList<Server>());
     @Monitor(name = PREFIX + "UpServerList", type = DataSourceType.INFORMATIONAL)
     protected volatile List<Server> upServerList = Collections.synchronizedList(new ArrayList<Server>());
+
     protected ReadWriteLock allServerLock = new ReentrantReadWriteLock();
     protected ReadWriteLock upServerLock = new ReentrantReadWriteLock();
     // 名称，一般为服务名称
@@ -90,14 +91,14 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
     protected Timer lbTimer = null;
     // 10s ping一次
     protected int pingIntervalSeconds = 10;
-    // 每次最大ping时间
+    // 每次最大ping时间，此版本未使用
     protected int maxTotalPingTimeSeconds = 5;
-    // 是否已启动pingTask
+    // 是否已启动pingTask,cas设置，防止重复跑
     protected AtomicBoolean pingInProgress = new AtomicBoolean(false);
-    // 统计器
+    // 负载均衡数据统计
     protected LoadBalancerStats lbStats;
     private volatile Counter counter = Monitors.newCounter("LoadBalancer_ChooseServer");
-    // 启动连接器，检查server是否readyToServer(是否可提供服务)
+    // 启动实例连接器，检查server是否readyToServer(是否可提供服务)
     private PrimeConnections primeConnections;
     private volatile boolean enablePrimingConnections = false;
     private IClientConfig config;
@@ -184,8 +185,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
             ((AbstractLoadBalancerPing) ping).setLoadBalancer(this);
         }
         logger.info("Client: {} instantiated a LoadBalancer: {}", name, this);
-        boolean enablePrimeConnections = clientConfig.get(
-                CommonClientConfigKey.EnablePrimeConnections, DefaultClientConfigImpl.DEFAULT_ENABLE_PRIME_CONNECTIONS);
+        boolean enablePrimeConnections = clientConfig.get(CommonClientConfigKey.EnablePrimeConnections,
+                DefaultClientConfigImpl.DEFAULT_ENABLE_PRIME_CONNECTIONS);
         // 默认不开启
         if (enablePrimeConnections) {
             this.setEnablePrimingConnections(true);
@@ -268,7 +269,12 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         return ping == null || ping.getClass().getName().equals(DummyPing.class.getName());
     }
 
-    // 启动ping命令
+    /**
+     * 启动ping任务
+     * 1、LoadBalancer对象创建时启动
+     * 2、修改ping间隔时
+     * 3、修改ping实现类时
+     */
     void setupPingTask() {
         if (canSkipPing()) {
             return;
@@ -527,6 +533,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
                         newServers.add((Server) server);
                     }
                 }
+                // 异步prime 实例可用
                 if (primeConnections != null) {
                     primeConnections.primeConnectionsAsync(newServers, this);
                 }
@@ -552,7 +559,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
     /* List in string form. SETS, does not add. */
     void setServers(String srvString) {
         if (srvString != null) {
-
             try {
                 String[] serverArr = srvString.split(",");
                 ArrayList<Server> newList = new ArrayList<Server>();
@@ -602,6 +608,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         return Collections.unmodifiableList(allServerList);
     }
 
+    /**
+     * 实例分组
+     */
     @Override
     public List<Server> getServerList(ServerGroup serverGroup) {
         switch (serverGroup) {
@@ -643,10 +652,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
     }
 
     /**
-     * Class that contains the mechanism to "ping" all the instances
-     * 
-     * @author stonse
-     *
+     * ping所有机器：IPingStrategy + IPing
      */
     class Pinger {
 
@@ -658,21 +664,21 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
 
         public void runPinger() throws Exception {
             if (!pingInProgress.compareAndSet(false, true)) { 
-                return; // Ping in progress - nothing to do
+                return;
             }
-            // we are "in" - we get to Ping
-            Server[] allServers = null;
-            boolean[] results = null;
-            Lock allLock = null;
-            Lock upLock = null;
+            Server[] allServers;
+            boolean[] results;
+            Lock allLock;
+            Lock upLock;
             try {
+                // --------获取所有服务实例-------------
                 allLock = allServerLock.readLock();
-                // 获取所有服务实例
                 allLock.lock();
                 allServers = allServerList.toArray(new Server[allServerList.size()]);
                 allLock.unlock();
                 int numCandidates = allServers.length;
                 results = pingerStrategy.pingServers(ping, allServers);
+                // 新的up状态的server
                 final List<Server> newUpList = new ArrayList<Server>();
                 // 状态发生变化
                 final List<Server> changedServers = new ArrayList<Server>();
@@ -689,11 +695,12 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
                         newUpList.add(svr);
                     }
                 }
-                // 加锁更新
+                // 加锁更新，up状态的服务实例
                 upLock = upServerLock.writeLock();
                 upLock.lock();
                 upServerList = newUpList;
                 upLock.unlock();
+                // server状态变化，通知监听器
                 notifyServerStatusChangeListener(changedServers);
             } finally {
                 pingInProgress.set(false);
@@ -718,12 +725,10 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         return Monitors.newCounter("LoadBalancer_ChooseServer");
     }
 
-    /*
-     * Get the alive server dedicated to key
-     * 
-     * @return the dedicated server
+    /**
+     * 负载均衡选择一台实例，默认的算法：RoundRobinRule 轮询算法
      */
-    // 负载均衡选择一台实例
+    @Override
     public Server chooseServer(Object key) {
         if (counter == null) {
             counter = createCounter();
@@ -741,8 +746,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         }
     }
 
-    // 负载均衡选择一台实例
-    /* Returns either null, or "server:port/servlet" */
+    /**
+     * 负载均衡选择一台实例ID
+     */
     public String choose(Object key) {
         if (rule == null) {
             return null;
@@ -757,6 +763,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         }
     }
 
+    @Override
     public void markServerDown(Server server) {
         if (server == null || !server.isAlive()) {
             return;
@@ -794,8 +801,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
     }
 
     /*
-     * Force an immediate ping, if we're not currently pinging and don't have a
-     * quick-ping already scheduled.
+     * 强制进行ping
      */
     public void forceQuickPing() {
         if (canSkipPing()) {
@@ -803,7 +809,6 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         }
         logger.debug("LoadBalancer [{}]:  forceQuickPing invoking", name);
         try {
-            // 强制快速ping
         	new Pinger(pingStrategy).runPinger();
         } catch (Exception e) {
             logger.error("LoadBalancer [{}]: Error running forceQuickPing()", name, e);
@@ -835,6 +840,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
         return primeConnections;
     }
 
+    // 设置PrimeConnections
     public final void setPrimeConnections(PrimeConnections primeConnections) {
         this.primeConnections = primeConnections;
     }
@@ -844,7 +850,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
      */
     @Override
     public void primeCompleted(Server s, Throwable lastException) {
-        // 设置实例可以执行请求
+        // prime完成时设置实例可以执行请求，不管是否有异常
         s.setReadyToServe(true);
     }
 
@@ -868,11 +874,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
     }
 
     /**
-     * IPing策略：串行化策略
-     *
-     * Default implementation for <c>IPingStrategy</c>, performs ping
-     * serially, which may not be desirable, if your <c>IPing</c>
-     * implementation is slow, or you have large number of servers.
+     * IPing策略：同步串行化策略
+     * 如果实例很多，该实现方法会很耗时
      */
     private static class SerialPingStrategy implements IPingStrategy {
 
@@ -882,20 +885,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements PrimeConne
             boolean[] results = new boolean[numCandidates];
             logger.debug("LoadBalancer:  PingTask executing [{}] servers configured", numCandidates);
             for (int i = 0; i < numCandidates; i++) {
-                results[i] = false; /* Default answer is DEAD. */
+                results[i] = false;
                 try {
-                    // NOTE: IFF we were doing a real ping
-                    // assuming we had a large set of servers (say 15)
-                    // the logic below will run them serially
-                    // hence taking 15 times the amount of time it takes
-                    // to ping each server
-                    // A better method would be to put this in an executor
-                    // pool
-                    // But, at the time of this writing, we dont REALLY
-                    // use a Real Ping (its mostly in memory eureka call)
-                    // hence we can afford to simplify this design and run
-                    // this
-                    // serially
                     if (ping != null) {
                         results[i] = ping.isAlive(servers[i]);
                     }

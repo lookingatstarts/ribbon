@@ -21,7 +21,9 @@ import com.netflix.client.config.IClientConfig;
 
 /**
  * Default simple implementation that marks the liveness of a Server
- * 
+ *  dummy: 假的
+ *  不执行ping
+ *
  * @author stonse
  * 
  */

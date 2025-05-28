@@ -22,6 +22,9 @@ import com.netflix.util.Pair;
 /**
  * 服务实例
  *
+ * 每个属性设置都没有synchronization同步控制
+ * 是因为它统一依照last win的原则来处理接口，否则效率太低了
+ *
  * Class that represents a typical Server (or an addressable Node) i.e. a
  * Host:port identifier
  * 
@@ -67,7 +70,7 @@ public class Server {
     private int port = 80;
     // https/http
     private String scheme;
-    // 实例ID
+    // 实例ID，默认为host:port
     private volatile String id;
     // 机器是否可用
     private volatile boolean isAliveFlag;
@@ -250,6 +253,10 @@ public class Server {
         return this.getId();
     }
 
+    /**
+     * 如果id相同，则认为是同台实例
+     * server放入set时要特别注意
+     */
     public boolean equals(Object obj) {
         if (this == obj)
             return true;

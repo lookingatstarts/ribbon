@@ -37,7 +37,6 @@ public class NIWSDiscoveryPing extends AbstractLoadBalancerPing {
 	        
 		BaseLoadBalancer lb = null; 
 		
-
 		public NIWSDiscoveryPing() {
 		}
 		
@@ -55,6 +54,7 @@ public class NIWSDiscoveryPing extends AbstractLoadBalancerPing {
 
 		public boolean isAlive(Server server) {
 		    boolean isAlive = true;
+			// 使用服务实例在服务注册中心的状态
 		    if (server!=null && server instanceof DiscoveryEnabledServer){
 	            DiscoveryEnabledServer dServer = (DiscoveryEnabledServer)server;	            
 	            InstanceInfo instanceInfo = dServer.getInstanceInfo();

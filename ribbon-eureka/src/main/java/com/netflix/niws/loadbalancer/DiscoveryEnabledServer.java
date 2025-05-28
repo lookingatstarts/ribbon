@@ -27,6 +27,8 @@ import com.netflix.loadbalancer.Server;
  * meta data in the form of InstanceInfo
  * @author stonse
  *
+ * 基于服务注册中心来判断
+ *
  */
 @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS")
 public class DiscoveryEnabledServer extends Server{

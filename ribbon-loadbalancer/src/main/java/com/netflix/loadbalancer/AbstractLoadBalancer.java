@@ -60,8 +60,9 @@ public abstract class AbstractLoadBalancer implements ILoadBalancer {
     public abstract List<Server> getServerList(ServerGroup serverGroup);
     
     /**
-     * 负载均衡性能相关的统计信息
-     * Obtain LoadBalancer related Statistics
+     * 负载均衡性能相关的统计信息，对IRule选择实例时有重要作用
+     *
+     * 有了LoadBalancerStats就可以感知zone server的负载、运行情况，做到更高效的负载均衡
      */
     public abstract LoadBalancerStats getLoadBalancerStats();    
 }

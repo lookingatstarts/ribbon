@@ -22,7 +22,9 @@ import com.netflix.client.IClientConfigAware;
 /**
  * Class that provides the basic implementation of detmerining the "liveness" or
  * suitability of a Server (a node)
- * 
+ *
+ * 关联上LoadBalancer，通过它可以获取serverList
+ *
  * @author stonse
  * 
  */

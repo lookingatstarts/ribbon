@@ -33,6 +33,8 @@ public abstract class AbstractServerList<T extends Server> implements ServerList
      
     
     /**
+     * 通过ClientFactory创建ServerListFilter对象
+     *
      * Get a ServerListFilter instance. It uses {@link ClientFactory#instantiateInstanceWithClientConfig(String, IClientConfig)}
      * which in turn uses reflection to initialize the filter instance. 
      * The filter class name is determined by the value of {@link CommonClientConfigKey#NIWSServerListFilterClassName}
@@ -40,6 +42,7 @@ public abstract class AbstractServerList<T extends Server> implements ServerList
      */
     public AbstractServerListFilter<T> getFilterImpl(IClientConfig niwsClientConfig) throws ClientException{
         try {
+            // ServerListFilter实现类
             String niwsServerListFilterClassName = niwsClientConfig
                     .getProperty(
                             CommonClientConfigKey.NIWSServerListFilterClassName,

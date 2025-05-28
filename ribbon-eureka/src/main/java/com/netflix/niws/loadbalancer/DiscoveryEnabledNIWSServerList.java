@@ -159,7 +159,7 @@ public class DiscoveryEnabledNIWSServerList extends AbstractServerList<Discovery
             logger.warn("EurekaClient has not been initialized yet, returning an empty list");
             return new ArrayList<DiscoveryEnabledServer>();
         }
-
+        // Eureka服务注册中心
         EurekaClient eurekaClient = eurekaClientProvider.get();
         if (vipAddresses!=null){
             for (String vipAddress : vipAddresses.split(",")) {

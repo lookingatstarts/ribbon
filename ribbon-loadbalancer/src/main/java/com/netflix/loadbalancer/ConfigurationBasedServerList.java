@@ -36,7 +36,8 @@ import com.netflix.config.DynamicStringProperty;
  * <pre>{@code
 <clientName>.<nameSpace>.listOfServers=<comma delimited hostname:port strings>
 }</pre>
- * 
+ * 通过配置去管理serverList，多个实例eg: 173.0.0.1:8080,183.0.0.2:8080
+ *
  * @author awang
  * 
  */

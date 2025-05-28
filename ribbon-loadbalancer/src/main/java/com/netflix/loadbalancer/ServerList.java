@@ -27,9 +27,13 @@ import java.util.List;
  */
 public interface ServerList<T extends Server> {
 
+    /**
+     * 没有调用方
+     */
     public List<T> getInitialListOfServers();
     
     /**
+     * 唯一调用方：DynamicServerListLoadBalancer#updateListOfServers
      * Return updated list of servers. This is called say every 30 secs
      * (configurable) by the Loadbalancer's Ping cycle
      * 
